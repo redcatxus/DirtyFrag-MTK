@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Dark mode fallback palette.
+        On Android 12+ these are overridden by Material You dynamic colors for the M3 tokens,
+        but they're still used by custom semantic colors (log, nav glass, etc.)
+        and as fallback on devices without wallpaper-derived colors.
+    -->
+
+    <!-- Brand / accent -->
+    <color name="primary">#FFB59A</color>      <!-- warm amber on dark, M3 tone 80 -->
+    <color name="on_primary">#5C1A00</color>
+    <color name="secondary">#E8B49A</color>
+
+    <!-- Surfaces -->
+    <color name="page_background">#191210</color>  <!-- very dark warm brown -->
+    <color name="card_background">#261F1C</color>
+    <color name="card_outline">#4A3B33</color>
+
+    <!-- Text -->
+    <color name="ink">#F0E0D6</color>              <!-- warm off-white -->
+    <color name="secondary_ink">#B09080</color>
+
+    <!-- Log terminal — keeps a warm tinted feel in dark mode -->
+    <color name="log_background">#1E1612</color>
+    <color name="log_ink">#D4B8A8</color>
+
+    <!-- Bottom nav -->
+    <color name="nav_icon_default">#9E8275</color>
+    <color name="nav_active_indicator">#3D2A22</color>
+    <color name="nav_ripple">#33FFB59A</color>
+    <color name="nav_glass_top">#CC261F1C</color>
+    <color name="nav_glass_bottom">#E0191210</color>
+    <color name="nav_glass_outline">#554540</color>
+</resources>
