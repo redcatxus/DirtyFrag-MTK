@@ -4,14 +4,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/page_background"
+    android:background="?android:attr/colorBackground"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/page_background"
         android:elevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -24,13 +23,14 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:title="DirtyFrag Android Root"
-            android:titleTextColor="@color/ink"
+            android:titleTextColor="?attr/colorOnSurface"
             app:subtitle="Experimental Android root"
-            app:subtitleTextColor="@color/secondary_ink"
+            app:subtitleTextColor="?attr/colorOnSurfaceVariant"
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
             app:subtitleTextAppearance="@style/TextAppearance.Material3.BodySmall" />
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- HOME TAB -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/homeScroll"
         android:layout_width="0dp"
@@ -50,15 +50,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Device profile card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -71,7 +72,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="THIS DEVICE"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -84,21 +85,22 @@
                         android:fontFamily="monospace"
                         android:lineSpacingExtra="3dp"
                         android:text="Reading device profile…"
-                        android:textColor="@color/ink"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         android:textIsSelectable="true" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Root session card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardLaunch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -111,7 +113,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="ROOT SESSION"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -130,20 +132,21 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Root is temporary and is cleared when the phone reboots. Device and firmware compatibility is not guaranteed."
-                        android:textColor="@color/secondary_ink"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Run log card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardLogs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -156,7 +159,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="RUN LOG"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -186,6 +189,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- SETTINGS TAB -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/settingsScroll"
         android:layout_width="0dp"
@@ -206,16 +210,17 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Root manager card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardManager"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -228,7 +233,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="ROOT MANAGER"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -239,7 +244,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Loader: automatic manager detection"
-                        android:textColor="@color/ink"
+                        android:textColor="?attr/colorOnSurface"
                         android:textStyle="bold" />
 
                     <TextView
@@ -248,7 +253,7 @@
                         android:layout_marginTop="6dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Automatic mode checks KernelSU Manager, then ReSukiSU Manager, then /data/adb/ksu/bin/ksud. A compatible arm64 ksud can be selected manually."
-                        android:textColor="@color/secondary_ink"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -267,15 +272,16 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- DirtyFrag helper module card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardModule"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -288,7 +294,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="DIRTYFRAG HELPER MODULE"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -299,7 +305,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="Selected DirtyFrag helper"
-                        android:textColor="@color/ink"
+                        android:textColor="?attr/colorOnSurface"
                         android:textStyle="bold" />
 
                     <TextView
@@ -309,7 +315,7 @@
                         android:layout_marginTop="6dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Automatic mode shows the selected file. If no helper matches this kernel, build a DFRoot dirtyfrag.ko for its KMI and select that file here."
-                        android:textColor="@color/secondary_ink"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp" />
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -325,7 +331,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="none"
-                            android:textColor="@color/ink" />
+                            android:textColor="?attr/colorOnSurface" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton
@@ -344,15 +350,16 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Advanced patch #2 targets card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAdvancedTargets"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/card_outline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -365,7 +372,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="ADVANCED PATCH #2 TARGETS"
-                        android:textColor="@color/primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
@@ -376,7 +383,7 @@
                         android:layout_marginTop="6dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Optional device-specific carrier files used for patch #2. Enter one existing absolute /vendor/ or /system/vendor/ path per line. The app tries them in order and keeps the defaults until you save."
-                        android:textColor="@color/secondary_ink"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp" />
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -399,7 +406,7 @@
                             android:fadeScrollbars="false"
                             android:overScrollMode="ifContentScrolls"
                             android:nestedScrollingEnabled="true"
-                            android:textColor="@color/ink"
+                            android:textColor="?attr/colorOnSurface"
                             android:fontFamily="monospace" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -408,7 +415,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:textColor="@color/secondary_ink"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -434,7 +441,7 @@
                 android:gravity="center"
                 android:padding="12dp"
                 android:text="GitHub · @ankitrawatgit"
-                android:textColor="@color/primary"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:clickable="true"
@@ -442,6 +449,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Floating bottom navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="0dp"
