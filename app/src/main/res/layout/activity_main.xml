@@ -593,7 +593,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="DIRTYFRAG HELPER MODULE"
+                            android:text="KITTYFRAG HELPER MODULE"
                             android:textColor="?attr/colorPrimary"
                             android:textSize="12sp"
                             android:textStyle="bold"
@@ -604,7 +604,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Selected DirtyFrag helper"
+                            android:text="Selected KittyFrag helper"
                             android:textColor="?attr/colorOnSurface"
                             android:textStyle="bold" />
 
@@ -651,7 +651,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Bundled DirtyFrag .ko"
+                                        android:text="Bundled KittyFrag .ko"
                                         android:textColor="?attr/colorOnSurfaceVariant"
                                         android:textSize="12sp" />
 

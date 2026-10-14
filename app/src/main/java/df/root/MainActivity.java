@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TITLE, "dirtyfrag-log.txt");
+        intent.putExtra(Intent.EXTRA_TITLE, "kittyfrag-log.txt");
         try {
             startActivityForResult(intent, REQUEST_SAVE_LOG);
         } catch (Exception e) {
@@ -629,7 +629,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             try {
                 File logDir = getExternalFilesDir(null);
                 if (logDir == null) logDir = getFilesDir();
-                File logFile = new File(logDir, "dirtyfrag-log.txt");
+                File logFile = new File(logDir, "kittyfrag-log.txt");
                 try (FileOutputStream fos = new FileOutputStream(logFile)) {
                     fos.write(text.toString().getBytes(StandardCharsets.UTF_8));
                 }
@@ -880,7 +880,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         getSharedPreferences("dfroot", MODE_PRIVATE).edit()
                 .remove("custom_ko_label").putString(PREF_SELECTED_KO, AUTO_KO).apply();
         updateKoMode();
-        report("using bundled DirtyFrag module selected by KMI (default)\n");
+        report("using bundled KittyFrag module selected by KMI (default)\n");
     }
 
     private void onKoSelection(int position) {

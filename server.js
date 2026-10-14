@@ -888,26 +888,97 @@ function handleRequest(req, res) {
       background: var(--on-primary);
     }
 
-    /* Toast Notification */
-    .toast {
+    /* Material Design 3 Expressive & Material You Dynamic Floating Toast */
+    .mde3-toast-container {
       position: absolute;
-      bottom: 96px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #272a2f;
-      color: #e1e2e8;
-      border: 1px solid #43474e;
-      padding: 8px 16px;
-      border-radius: 9999px;
-      font-size: 13px;
+      bottom: 92px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 120;
+      padding: 0 16px;
+    }
+    .mde3-toast {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90%;
+      padding: 8px 16px 8px 10px;
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      border: 1px solid var(--outline-variant);
+      border-radius: 24px;
+      box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45), 0 3px 8px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transform: translateY(22px) scale(0.92);
       opacity: 0;
       pointer-events: none;
-      transition: all 0.25s;
-      z-index: 100;
+      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  opacity 0.22s cubic-bezier(0.2, 0, 0, 1);
     }
-    .toast.show {
+    .mde3-toast.show {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .mde3-toast-icon-wrap {
+      width: 32px;
+      height: 32px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+      transition: background 0.25s, color 0.25s;
+    }
+    .mde3-toast-icon-wrap.tone-success {
+      background: rgba(123, 213, 140, 0.22);
+      color: var(--color-success);
+    }
+    .mde3-toast-icon-wrap.tone-warn {
+      background: rgba(255, 213, 102, 0.22);
+      color: var(--color-warn);
+    }
+    .mde3-toast-icon-wrap.tone-error {
+      background: rgba(242, 184, 181, 0.22);
+      color: var(--color-error);
+    }
+    .mde3-toast-icon-wrap.tone-primary {
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+    }
+    .mde3-toast-label {
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      line-height: 1.35;
+      color: var(--on-surface);
+      white-space: normal;
+      word-break: break-word;
+    }
+    .mde3-toast-action {
+      margin-left: 6px;
+      padding: 4px 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .mde3-toast-action:hover {
+      opacity: 0.9;
+      transform: scale(1.03);
     }
   </style>
 </head>
@@ -934,8 +1005,8 @@ function handleRequest(req, res) {
 
     <!-- App Header with KittyFrag Icon and M3 Theme Toggle -->
     <div class="app-bar">
-      <div class="app-title-group" style="display:flex; flex-direction:row; align-items:center; gap:12px;">
-        <img src="/kittyfrag_icon.png" width="44" height="44" style="border-radius:12px; border:1px solid #2B314B; box-shadow:0 4px 12px rgba(0,0,0,0.5);" alt="KittyFrag">
+      <div class="app-title-group" style="display:flex; flex-direction:row; align-items:center; gap:10px;">
+        <img src="/kittyfrag_icon.png" width="30" height="30" style="border-radius:8px; border:1px solid #2B314B; box-shadow:0 2px 6px rgba(0,0,0,0.4);" alt="KittyFrag">
         <div style="display:flex; flex-direction:column;">
           <div class="app-title">KittyFrag</div>
           <div class="app-subtitle">Experimental Android root</div>
@@ -954,7 +1025,8 @@ function handleRequest(req, res) {
       <div class="page" id="pageHome">
         <div class="card">
           <div class="card-label">This Device</div>
-          <div class="mono-body">Brand: INFINIX
+          <div class="mono-body">Package: kitty.root
+Brand: INFINIX
 Model / device: Infinix X6885 / Infinix-X6885
 SoC: MT6789
 Android: 16 (API 36)
@@ -1047,14 +1119,14 @@ KMI: android16-6.12</div>
         </div>
 
         <div class="card">
-          <div class="card-label">DirtyFrag Helper Module</div>
-          <div style="font-size:14px; font-weight:600; margin-top:4px;">Selected DirtyFrag helper</div>
+          <div class="card-label">KittyFrag Helper Module</div>
+          <div style="font-size:14px; font-weight:600; margin-top:4px;">Selected KittyFrag helper</div>
           <div class="sub-note">Automatic mode shows the selected file. If no helper matches this kernel, build a DFRoot dirtyfrag.ko for its KMI and select that file here.</div>
           
           <!-- Sleek Selector Card opening Material 3 Dialog -->
           <div class="field-card" id="btnOpenKoDialog">
             <div>
-              <div class="field-card-title">Bundled DirtyFrag .ko</div>
+              <div class="field-card-title">Bundled KittyFrag .ko</div>
               <div class="field-card-val" id="koSelectedDisplay">dirtyfrag-android16-6.12.ko</div>
             </div>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--on-surface-variant)"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
@@ -1156,7 +1228,7 @@ KMI: android16-6.12</div>
     <!-- KO SELECTION DIALOG (Screenshot 3 styled selection pill + clean mismatch format) -->
     <div class="modal-overlay" id="modalKo">
       <div class="dialog-card">
-        <div class="dialog-title">Bundled DirtyFrag .ko</div>
+        <div class="dialog-title">Bundled KittyFrag .ko</div>
         <div class="dialog-subtitle">Choose module variant for this kernel</div>
         
         <div class="dialog-content-scroll" id="koOptionsList">
@@ -1203,8 +1275,16 @@ KMI: android16-6.12</div>
       </div>
     </div>
 
-    <!-- In-app Toast message -->
-    <div class="toast" id="toast">Log copied to clipboard</div>
+    <!-- MDE3 & Material You Dynamic Floating Toast (Interactive with Dynamic Theming & Contextual Icons) -->
+    <div class="mde3-toast-container">
+      <div class="mde3-toast" id="mde3Toast">
+        <div class="mde3-toast-icon-wrap tone-primary" id="mde3ToastIcon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </div>
+        <div class="mde3-toast-label" id="mde3ToastLabel">Toast message</div>
+        <button class="mde3-toast-action" id="mde3ToastAction" style="display:none;">Undo</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1215,8 +1295,10 @@ KMI: android16-6.12</div>
     const terminalContainer = document.getElementById('terminalContainer');
     const gutterView = document.getElementById('gutterView');
     const logBox = document.getElementById('logBox');
-    const btnLaunch = document.getElementById('btnLaunchRoot');
-    const toast = document.getElementById('toast');
+    const mde3Toast = document.getElementById('mde3Toast');
+    const mde3ToastIcon = document.getElementById('mde3ToastIcon');
+    const mde3ToastLabel = document.getElementById('mde3ToastLabel');
+    const mde3ToastAction = document.getElementById('mde3ToastAction');
     const btnToggleScrollLock = document.getElementById('btnToggleScrollLock');
     const scrollLockIcon = document.getElementById('scrollLockIcon');
     const statusProgress = document.getElementById('statusProgress');
@@ -1228,21 +1310,95 @@ KMI: android16-6.12</div>
     let isNavigating = false;
     let navTimeout = null;
 
-    function showToast(msg, onActionClick) {
-      toast.innerHTML = msg;
-      toast.classList.add('show');
-      if (onActionClick) {
-        toast.style.pointerEvents = 'auto';
-        toast.onclick = () => {
-          onActionClick();
-          toast.classList.remove('show');
-          toast.onclick = null;
+    let toastTimer = null;
+
+    const ICONS_MAP = {
+      copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+      save: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>',
+      trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>',
+      success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+      error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
+      warn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+      sun: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>',
+      moon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4C12.92 3.04 12.46 3 12 3z"/></svg>',
+      sparkle: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>',
+      chip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 3H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V7h2V5h-2V3h-2v2h-2V3h-2v2H9V3zm8 14H7V7h10v10z"/></svg>',
+      lock: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>',
+      info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+    };
+
+    function showToast(rawMsg, onActionClick) {
+      clearTimeout(toastTimer);
+      let text = String(rawMsg);
+      let actionLabel = null;
+      let actionCb = null;
+
+      if (typeof onActionClick === 'function') {
+        actionLabel = 'Undo';
+        actionCb = onActionClick;
+      }
+
+      const cleanText = text.replace(/<[^>]*>/g, '').replace(/·.*$/, '').trim();
+
+      let iconKey = 'info';
+      let tone = 'tone-primary';
+      const lower = cleanText.toLowerCase();
+
+      if (lower.includes('copy') || lower.includes('clipboard')) {
+        iconKey = 'copy';
+        tone = 'tone-primary';
+      } else if (lower.includes('save') || lower.includes('download')) {
+        iconKey = 'save';
+        tone = 'tone-primary';
+      } else if (lower.includes('clear') || lower.includes('empty')) {
+        iconKey = 'trash';
+        tone = 'tone-warn';
+      } else if (lower.includes('success') || lower.includes('restored') || lower.includes('completed')) {
+        iconKey = 'success';
+        tone = 'tone-success';
+      } else if (lower.includes('error') || lower.includes('failed') || lower.includes('different kernel') || lower.includes('invalid')) {
+        iconKey = 'error';
+        tone = 'tone-error';
+      } else if (lower.includes('warn') || lower.includes('warning') || lower.includes('not verified')) {
+        iconKey = 'warn';
+        tone = 'tone-warn';
+      } else if (lower.includes('amoled')) {
+        iconKey = 'sparkle';
+        tone = 'tone-primary';
+      } else if (lower.includes('dark theme')) {
+        iconKey = 'moon';
+        tone = 'tone-primary';
+      } else if (lower.includes('light theme')) {
+        iconKey = 'sun';
+        tone = 'tone-warn';
+      } else if (lower.includes('lock')) {
+        iconKey = 'lock';
+        tone = 'tone-primary';
+      } else if (lower.includes('helper') || lower.includes('.ko') || lower.includes('target') || lower.includes('profile')) {
+        iconKey = 'chip';
+        tone = 'tone-primary';
+      }
+
+      mde3ToastIcon.className = 'mde3-toast-icon-wrap ' + tone;
+      mde3ToastIcon.innerHTML = ICONS_MAP[iconKey] || ICONS_MAP.info;
+      mde3ToastLabel.textContent = cleanText;
+
+      if (actionLabel && actionCb) {
+        mde3ToastAction.textContent = actionLabel;
+        mde3ToastAction.style.display = 'inline-flex';
+        mde3ToastAction.onclick = () => {
+          actionCb();
+          mde3Toast.classList.remove('show');
         };
       } else {
-        toast.style.pointerEvents = 'none';
-        toast.onclick = null;
+        mde3ToastAction.style.display = 'none';
+        mde3ToastAction.onclick = null;
       }
-      setTimeout(() => toast.classList.remove('show'), 2800);
+
+      mde3Toast.classList.add('show');
+      toastTimer = setTimeout(() => {
+        mde3Toast.classList.remove('show');
+      }, 3400);
     }
 
     // Glitch-Free Fluid Tab Navigation
@@ -1478,9 +1634,9 @@ KMI: android16-6.12</div>
       const blob = new Blob([text], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'dirtyfrag-log.txt';
+      a.download = 'kittyfrag-log.txt';
       a.click();
-      showToast('Saved dirtyfrag-log.txt');
+      showToast('Saved kittyfrag-log.txt');
     }
 
     function handleClearLogs() {

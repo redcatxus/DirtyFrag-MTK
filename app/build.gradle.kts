@@ -10,7 +10,7 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "df.root"
+        applicationId = "kitty.root"
         minSdk = 31
         targetSdk = 36
         versionCode = 6
