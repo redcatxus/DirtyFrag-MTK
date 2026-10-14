@@ -1,4 +1,4 @@
-# DirtyFrag-MTK
+# KittyFrag
 
 ## ⚠️ **MTK Devices should avoid DFRoot for now**
 
@@ -7,7 +7,7 @@ active upstream project with newer fixes and improvements.**~~
 
 ~~**DFRoot repository:** <https://github.com/diabl0w/DFRoot>~~
 
-**Current upstream DFRoot implementation causes a kernel panic on many MediaTek devices. This standalone implementation (which was made by @ankitrawatgit) was tested on two different MTK devices, and returned success.**
+**Current upstream DFRoot implementation causes a kernel panic on many MediaTek devices. This standalone implementation (which was made by @ankitrawatgit) was tested on two different MTK devices, and the both of them returned success.**
 
 **Note that device and/or firmware compatibility is NOT guaranteed.**
 
