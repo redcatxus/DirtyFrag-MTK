@@ -1,0 +1,8 @@
+{
+  "name": "DirtyFrag MTK",
+  "description": "DirtyFrag MTK Android root interface and preview with Material Design 3 Expressive and dynamic theming.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

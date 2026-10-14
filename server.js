@@ -22,7 +22,7 @@ function getApkStats() {
     return { available: false, sizeBytes: 0, sizeMb: '0', mtime: null, filename: 'app-debug.apk' };
 }
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
     // Download APK routes
@@ -67,7 +67,7 @@ const server = http.createServer((req, res) => {
       --surface-container-low: #191c20;
       --surface-container: #1d2024;
       --surface-container-high: #272a2f;
-      --surface-terminal: #080b10;
+      --surface-terminal: #0D0E11;
       --outline: #8d9199;
       --outline-variant: #43474e;
       --primary: #92ccff;
@@ -78,7 +78,9 @@ const server = http.createServer((req, res) => {
       --on-surface: #e1e2e8;
       --on-surface-variant: #c3c6cf;
       --ink-terminal: #e6edf3;
-      --color-error: #ffb4ab;
+      --color-warn: #ffd566;
+      --color-success: #7bd58c;
+      --color-error: #f2b8b5;
       --radius-card: 20px;
     }
 
@@ -100,17 +102,19 @@ const server = http.createServer((req, res) => {
       --on-surface: #191c20;
       --on-surface-variant: #43474e;
       --ink-terminal: #1a1c1e;
+      --color-warn: #7d5700;
+      --color-success: #146c2e;
       --color-error: #ba1a1a;
     }
 
-    /* AMOLED Theme overrides (Pure pitch black with Material You dynamic accents) */
+    /* AMOLED Theme overrides (Pure pitch black #000000 with elevated #0D0E11 canvas & Material You accents) */
     [data-theme="amoled"] {
       --bg: #000000;
       --surface-container-lowest: #000000;
       --surface-container-low: #000000;
       --surface-container: #000000;
       --surface-container-high: #0a0a0a;
-      --surface-terminal: #000000;
+      --surface-terminal: #0D0E11;
       --outline: #33373e;
       --outline-variant: #1c2026;
       --primary: #92ccff;
@@ -121,7 +125,9 @@ const server = http.createServer((req, res) => {
       --on-surface: #e1e2e8;
       --on-surface-variant: #c3c6cf;
       --ink-terminal: #e6edf3;
-      --color-error: #ffb4ab;
+      --color-warn: #ffd566;
+      --color-success: #7bd58c;
+      --color-error: #f2b8b5;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -242,8 +248,7 @@ const server = http.createServer((req, res) => {
       max-width: 100%;
       height: 100%;
       overflow-y: auto;
-      padding: 8px 18px 116dp;
-      padding-bottom: 116px;
+      padding: 8px 18px 116px;
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -314,7 +319,7 @@ const server = http.createServer((req, res) => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
     .action-box {
       display: flex;
@@ -335,11 +340,14 @@ const server = http.createServer((req, res) => {
       justify-content: center;
       cursor: pointer;
       color: var(--on-surface-variant);
-      transition: background 0.15s;
+      transition: background 0.15s, color 0.15s;
     }
     .icon-action-btn:hover {
       background: rgba(146, 204, 255, 0.12);
       color: var(--primary);
+    }
+    .icon-action-btn.active-lock {
+      color: var(--color-warn);
     }
     .action-divider {
       width: 1px;
@@ -347,21 +355,154 @@ const server = http.createServer((req, res) => {
       background: var(--outline-variant);
     }
 
+    /* M3 Filter Chips Row */
+    .filter-chip-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 0 8px;
+      scrollbar-width: none;
+    }
+    .filter-chip-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--outline-variant);
+      background: transparent;
+      color: var(--on-surface-variant);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .filter-chip:hover {
+      background: rgba(146, 204, 255, 0.08);
+      color: var(--on-surface);
+    }
+    .filter-chip.active {
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    /* Real-Time Sticky Status Bar */
+    .status-banner {
+      background: var(--surface-container);
+      border: 1px solid var(--outline-variant);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .status-progress-bar {
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+      background-size: 200% 100%;
+      animation: progressIndeterminate 1.5s infinite linear;
+      display: none;
+    }
+    .status-progress-bar.active { display: block; }
+    @keyframes progressIndeterminate {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .status-content {
+      height: 34px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+    .status-text {
+      flex: 1;
+      color: var(--on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .status-duration {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 11px;
+      color: var(--on-surface-variant);
+    }
+
+    /* Terminal Container with Gutter & Monospace Scaling */
     .terminal-box {
       background: var(--surface-terminal);
       border: 1px solid var(--outline-variant);
       border-radius: 14px;
-      height: 230px;
+      height: 240px;
       overflow-y: auto;
-      padding: 12px;
+      padding: 10px 12px;
       font-family: 'Roboto Mono', monospace;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 16px;
       color: var(--ink-terminal);
       user-select: text;
-      white-space: pre-wrap;
-      word-break: break-all;
+      display: flex;
+      gap: 8px;
+      scroll-behavior: smooth;
     }
+    .terminal-gutter {
+      width: 24px;
+      flex-shrink: 0;
+      text-align: right;
+      color: var(--outline);
+      opacity: 0.6;
+      line-height: 16px;
+      font-size: 12px;
+      white-space: pre;
+      user-select: none;
+    }
+    .terminal-divider {
+      width: 1px;
+      background: var(--outline-variant);
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+    .terminal-logs {
+      flex: 1;
+      white-space: pre;
+      line-height: 16px;
+      font-size: 12px;
+      overflow-x: auto;
+    }
+    .log-line {
+      display: block;
+      line-height: 16px;
+      white-space: pre;
+    }
+    .log-time {
+      color: var(--outline);
+      opacity: 0.75;
+    }
+    .log-badge {
+      display: inline-block;
+      font-weight: 600;
+    }
+    .log-badge.info { color: var(--on-surface-variant); }
+    .log-badge.verb { color: var(--on-surface-variant); }
+    .log-badge.succ { color: var(--color-success); font-weight: 700; }
+    .log-badge.kern { color: var(--primary); font-weight: 700; }
+    .log-badge.warn { color: var(--color-warn); font-weight: 700; }
+    .log-badge.error { color: var(--color-error); font-weight: 700; }
+    .log-msg { color: var(--on-surface); }
 
     /* Settings inputs */
     .field-card {
@@ -407,7 +548,7 @@ const server = http.createServer((req, res) => {
     }
     .outline-btn:hover { background: rgba(146, 204, 255, 0.08); }
 
-    /* MDE3 Floating Bottom Nav */
+    /* MDE3 Floating Bottom Nav (Glitch-Free Fluid Pill Expansion) */
     .floating-nav-wrap {
       position: absolute;
       bottom: 24px;
@@ -439,14 +580,17 @@ const server = http.createServer((req, res) => {
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      padding: 0 14px;
-      gap: 8px;
-      transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+      padding: 0 12px;
+      transition: background-color 0.25s cubic-bezier(0.2, 0, 0, 1),
+                  color 0.25s cubic-bezier(0.2, 0, 0, 1),
+                  padding 0.25s cubic-bezier(0.2, 0, 0, 1);
       user-select: none;
+      overflow: hidden;
     }
     .nav-tab-pill.active {
       background: var(--secondary-container);
       color: var(--on-secondary-container);
+      padding: 0 16px 0 14px;
     }
     .nav-tab-pill:not(.active) {
       background: transparent;
@@ -457,14 +601,24 @@ const server = http.createServer((req, res) => {
       width: 22px;
       height: 22px;
       fill: currentColor;
+      flex-shrink: 0;
     }
     .nav-tab-label {
       font-size: 14px;
       font-weight: 600;
       white-space: nowrap;
+      overflow: hidden;
+      max-width: 0;
+      opacity: 0;
+      margin-left: 0;
+      transition: max-width 0.25s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.2s cubic-bezier(0.2, 0, 0, 1),
+                  margin-left 0.25s cubic-bezier(0.2, 0, 0, 1);
     }
-    .nav-tab-pill:not(.active) .nav-tab-label {
-      display: none;
+    .nav-tab-pill.active .nav-tab-label {
+      max-width: 100px;
+      opacity: 1;
+      margin-left: 8px;
     }
 
     /* Dialog Modals */
@@ -474,7 +628,7 @@ const server = http.createServer((req, res) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.65);
       display: none;
       align-items: center;
       justify-content: center;
@@ -514,21 +668,37 @@ const server = http.createServer((req, res) => {
       flex: 1;
       border-top: 1px solid var(--outline-variant);
       border-bottom: 1px solid var(--outline-variant);
-      padding: 6px 0;
+      padding: 8px 0;
     }
-    .ko-item-row {
+
+    /* Screenshot 3 Styled Selection Pill */
+    .ko-item-card {
       display: flex;
       align-items: center;
-      padding: 10px 8px;
+      padding: 10px 14px;
+      margin: 4px 0;
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 16px;
       gap: 12px;
-      transition: background 0.15s;
+      transition: background-color 0.2s, color 0.2s;
     }
-    .ko-item-row:hover { background: rgba(146, 204, 255, 0.08); }
+    .ko-item-card.selected {
+      background: var(--secondary-container);
+      color: var(--on-secondary-container);
+    }
+    .ko-item-card.selected .ko-title {
+      color: var(--on-secondary-container);
+    }
+    .ko-item-card:not(.selected) {
+      background: transparent;
+      color: var(--on-surface);
+    }
+    .ko-item-card:not(.selected):hover {
+      background: rgba(146, 204, 255, 0.08);
+    }
     .ko-radio {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       border: 2px solid var(--outline);
       display: flex;
@@ -536,15 +706,15 @@ const server = http.createServer((req, res) => {
       justify-content: center;
       flex-shrink: 0;
     }
-    .ko-radio.checked {
-      border-color: var(--primary);
+    .ko-item-card.selected .ko-radio {
+      border-color: var(--on-secondary-container);
     }
-    .ko-radio.checked::after {
+    .ko-item-card.selected .ko-radio::after {
       content: '';
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--primary);
+      background: var(--on-secondary-container);
     }
     .ko-info { flex: 1; min-width: 0; }
     .ko-title {
@@ -558,8 +728,11 @@ const server = http.createServer((req, res) => {
       margin-top: 2px;
       color: var(--on-surface-variant);
     }
+    .ko-item-card.selected .ko-sub:not(.warning) {
+      color: var(--on-secondary-container);
+      opacity: 0.9;
+    }
     .ko-sub.warning { color: var(--color-error); font-weight: 500; }
-    .ko-sub.success { color: var(--primary); font-weight: 500; }
     .ko-indicator {
       width: 22px;
       height: 22px;
@@ -592,6 +765,11 @@ const server = http.createServer((req, res) => {
     .dialog-btn.confirm {
       background: var(--secondary-container);
       color: var(--on-secondary-container);
+      min-width: 100px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .dialog-btn.confirm:hover {
+      filter: brightness(1.08);
     }
 
     /* Theme Option Cards in Dialog */
@@ -741,6 +919,12 @@ KMI: android16-6.12</div>
           <div class="log-header">
             <div class="card-label" style="margin-bottom:0">Run Log</div>
             <div class="action-box">
+              <button class="icon-action-btn" id="btnToggleScrollLock" title="Toggle auto-scroll lock">
+                <svg id="scrollLockIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>
+                </svg>
+              </button>
+              <div class="action-divider"></div>
               <button class="icon-action-btn" id="btnCopyLogs" title="Copy log">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
               </button>
@@ -758,7 +942,33 @@ KMI: android16-6.12</div>
               </button>
             </div>
           </div>
-          <div class="terminal-box" id="logBox">Ready. Review the detected KMI and selected module before launching.</div>
+
+          <!-- M3 FilterChip Row -->
+          <div class="filter-chip-row" id="filterChipRow">
+            <button class="filter-chip active" data-filter="all">All</button>
+            <button class="filter-chip" data-filter="errors">Errors Only</button>
+            <button class="filter-chip" data-filter="kernel">Kernel Output</button>
+            <button class="filter-chip" data-filter="verbose">Verbose</button>
+          </div>
+
+          <!-- Real-Time Sticky Status Bar -->
+          <div class="status-banner" id="statusBanner">
+            <div class="status-progress-bar" id="statusProgress"></div>
+            <div class="status-content">
+              <div class="status-icon" id="statusIcon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              </div>
+              <span class="status-text" id="statusText">Ready · Review detected KMI and launch root</span>
+              <span class="status-duration" id="statusDuration"></span>
+            </div>
+          </div>
+
+          <!-- Terminal Box with Line Number Gutter & Monospace Scaling -->
+          <div class="terminal-box" id="terminalContainer">
+            <div class="terminal-gutter" id="gutterView">01</div>
+            <div class="terminal-divider"></div>
+            <div class="terminal-logs" id="logBox"></div>
+          </div>
         </div>
       </div>
 
@@ -814,19 +1024,19 @@ KMI: android16-6.12</div>
       </div>
     </div>
 
-    <!-- KO SELECTION DIALOG (Displays clean warning: Kernel mismatch (X.XX vs Y.YY)) -->
+    <!-- KO SELECTION DIALOG (Screenshot 3 styled selection pill + clean mismatch format) -->
     <div class="modal-overlay" id="modalKo">
       <div class="dialog-card">
         <div class="dialog-title">Bundled DirtyFrag .ko</div>
         <div class="dialog-subtitle">Choose module variant for this kernel</div>
         
         <div class="dialog-content-scroll" id="koOptionsList">
-          <!-- Dynamically filled by JS -->
+          <!-- Dynamically filled with Screenshot 3 styled item pills -->
         </div>
 
         <div class="dialog-actions">
           <button class="dialog-btn cancel" id="btnCancelKo">Cancel</button>
-          <button class="dialog-btn confirm" id="btnConfirmKo">OK</button>
+          <button class="dialog-btn confirm" id="btnConfirmKo">Confirm</button>
         </div>
       </div>
     </div>
@@ -873,55 +1083,206 @@ KMI: android16-6.12</div>
     const pager = document.getElementById('pager');
     const tabHomePill = document.getElementById('tabHomePill');
     const tabSettingsPill = document.getElementById('tabSettingsPill');
+    const terminalContainer = document.getElementById('terminalContainer');
+    const gutterView = document.getElementById('gutterView');
     const logBox = document.getElementById('logBox');
     const btnLaunch = document.getElementById('btnLaunchRoot');
     const toast = document.getElementById('toast');
+    const btnToggleScrollLock = document.getElementById('btnToggleScrollLock');
+    const scrollLockIcon = document.getElementById('scrollLockIcon');
+    const statusProgress = document.getElementById('statusProgress');
+    const statusIcon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+    const statusDuration = document.getElementById('statusDuration');
 
-    function showToast(msg) {
-      toast.textContent = msg;
+    let currentTabIndex = 0;
+    let isNavigating = false;
+    let navTimeout = null;
+
+    function showToast(msg, onActionClick) {
+      toast.innerHTML = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      if (onActionClick) {
+        toast.style.pointerEvents = 'auto';
+        toast.onclick = () => {
+          onActionClick();
+          toast.classList.remove('show');
+          toast.onclick = null;
+        };
+      } else {
+        toast.style.pointerEvents = 'none';
+        toast.onclick = null;
+      }
+      setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
-    // Tab Navigation
+    // Glitch-Free Fluid Tab Navigation
     function selectTab(pageIndex) {
+      currentTabIndex = pageIndex;
+      isNavigating = true;
       if (pageIndex === 0) {
-        pager.scrollTo({ left: 0, behavior: 'smooth' });
         tabHomePill.classList.add('active');
         tabSettingsPill.classList.remove('active');
+        pager.scrollTo({ left: 0, behavior: 'smooth' });
       } else {
-        pager.scrollTo({ left: pager.clientWidth, behavior: 'smooth' });
         tabSettingsPill.classList.add('active');
         tabHomePill.classList.remove('active');
+        pager.scrollTo({ left: pager.clientWidth, behavior: 'smooth' });
       }
+      clearTimeout(navTimeout);
+      navTimeout = setTimeout(() => { isNavigating = false; }, 350);
     }
 
     tabHomePill.addEventListener('click', () => selectTab(0));
     tabSettingsPill.addEventListener('click', () => selectTab(1));
 
     pager.addEventListener('scroll', () => {
+      if (isNavigating) return;
       const scrollLeft = pager.scrollLeft;
       const width = pager.clientWidth;
-      if (scrollLeft > width / 2) {
+      if (scrollLeft > width * 0.55) {
+        currentTabIndex = 1;
         tabSettingsPill.classList.add('active');
         tabHomePill.classList.remove('active');
-      } else {
+      } else if (scrollLeft < width * 0.45) {
+        currentTabIndex = 0;
         tabHomePill.classList.add('active');
         tabSettingsPill.classList.remove('active');
       }
     });
 
-    // Run Log Action Buttons
+    // Structured Log System with Level-Based Tokens & Fixed-Width Metadata
+    let logEntries = [];
+    let clearedLogEntries = [];
+    let activeFilter = 'all';
+    let autoScrollLocked = false;
+
+    function detectLevel(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('error') || lower.includes('failed') || lower.includes('fail:') ||
+          lower.includes('exception') || lower.includes('fatal') || lower.includes('could not') ||
+          lower.includes('cannot') || lower.includes('mismatch detected')) {
+        return 'error';
+      }
+      if (lower.includes('warn') || lower.includes('warning') || lower.includes('mismatch') ||
+          lower.includes('unrecognized') || lower.includes('fallback')) {
+        return 'warn';
+      }
+      if (lower.includes('success') || lower.includes('completed') || lower.includes('succeeded') ||
+          lower.includes('root: success') || lower.includes('daemon initiated')) {
+        return 'succ';
+      }
+      if (lower.includes('kernel') || lower.includes('kmi') || lower.includes('dirtyfrag') ||
+          lower.includes('lkm') || lower.includes('module') || lower.includes('splice') ||
+          lower.includes('/dev/df') || lower.includes('ipsec') || lower.includes('spi:') ||
+          lower.includes('encap port:') || lower.includes('vermagic')) {
+        return 'kern';
+      }
+      if (lower.includes('verbose') || lower.includes('debug') || lower.includes('stage') ||
+          lower.includes('setup') || lower.includes('testing')) {
+        return 'verb';
+      }
+      return 'info';
+    }
+
+    function formatTime(d) {
+      const pad = (n, w=2) => String(n).padStart(w, '0');
+      return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + pad(d.getMilliseconds(), 3);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function addLogEntry(rawText) {
+      let trimmed = rawText.trim();
+      if (!trimmed) return;
+      if (trimmed.startsWith('[+]') || trimmed.startsWith('[*]') || trimmed.startsWith('[-]')) {
+        trimmed = trimmed.substring(3).trim();
+      }
+      const level = detectLevel(trimmed);
+      const timeStr = formatTime(new Date());
+      const levelTag = level === 'warn' ? '[WARN]  ' :
+                       level === 'error' ? '[ERROR] ' :
+                       level === 'succ' ? '[SUCC]  ' :
+                       level === 'kern' ? '[KERN]  ' :
+                       level === 'verb' ? '[VERB]  ' : '[INFO]  ';
+      logEntries.push({ time: timeStr, level, tag: levelTag, message: trimmed });
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const filtered = logEntries.filter(e => {
+        if (activeFilter === 'errors') return e.level === 'error';
+        if (activeFilter === 'kernel') return e.level === 'kern';
+        if (activeFilter === 'verbose') return true;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        gutterView.textContent = '01';
+        logBox.innerHTML = '<span style="color:var(--on-surface-variant); opacity:0.6;">No log lines matching current filter</span>';
+        return;
+      }
+
+      gutterView.textContent = filtered.map((_, i) => String(i + 1).padStart(2, '0')).join('\n');
+      logBox.innerHTML = filtered.map(e => '<span class="log-line"><span class="log-time">[' + e.time + ']</span>  <span class="log-badge ' + e.level + '">' + e.tag + '</span> <span class="log-msg">' + escapeHtml(e.message) + '</span></span>').join('');
+
+      if (!autoScrollLocked) {
+        terminalContainer.scrollTop = terminalContainer.scrollHeight;
+      }
+    }
+
+    // Auto-Scroll Lock Toggle
+    btnToggleScrollLock.addEventListener('click', () => {
+      autoScrollLocked = !autoScrollLocked;
+      if (autoScrollLocked) {
+        btnToggleScrollLock.classList.add('active-lock');
+        scrollLockIcon.innerHTML = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>';
+        showToast('Auto-scroll paused (locked)');
+      } else {
+        btnToggleScrollLock.classList.remove('active-lock');
+        scrollLockIcon.innerHTML = '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>';
+        showToast('Auto-scroll resumed');
+        terminalContainer.scrollTop = terminalContainer.scrollHeight;
+      }
+    });
+
+    // Filter Chips
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.getAttribute('data-filter');
+        renderLogs();
+      });
+    });
+
+    // Run Log Action Buttons (Copy, Share, Save as file, Clear with undo)
     document.getElementById('btnCopyLogs').addEventListener('click', () => {
-      navigator.clipboard.writeText(logBox.textContent).then(() => showToast('Log copied to clipboard'));
+      if (logEntries.length === 0) {
+        showToast('Log is empty');
+        return;
+      }
+      const text = logEntries.map(e => '[' + e.time + ']  ' + e.tag + ' ' + e.message).join('\n');
+      navigator.clipboard.writeText(text).then(() => showToast('Formatted log copied to clipboard'));
     });
 
     document.getElementById('btnShareLogs').addEventListener('click', () => {
-      showToast('Sharing run log...');
+      if (logEntries.length === 0) {
+        showToast('Log is empty');
+        return;
+      }
+      showToast('Sharing run log (plain text attachment)...');
     });
 
     document.getElementById('btnSaveLogs').addEventListener('click', () => {
-      const blob = new Blob([logBox.textContent], { type: 'text/plain' });
+      if (logEntries.length === 0) {
+        showToast('Log is empty');
+        return;
+      }
+      const text = logEntries.map(e => '[' + e.time + ']  ' + e.tag + ' ' + e.message).join('\n');
+      const blob = new Blob([text], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'dirtyfrag-log.txt';
@@ -930,40 +1291,71 @@ KMI: android16-6.12</div>
     });
 
     document.getElementById('btnClearLogs').addEventListener('click', () => {
-      logBox.textContent = '';
-      showToast('Log cleared');
+      if (logEntries.length === 0) {
+        showToast('Log is already empty');
+        return;
+      }
+      clearedLogEntries = [...logEntries];
+      logEntries = [];
+      renderLogs();
+      showToast('Log canvas cleared · <u style="cursor:pointer; font-weight:700;">Undo</u>', () => {
+        if (clearedLogEntries.length > 0) {
+          logEntries = [...clearedLogEntries];
+          clearedLogEntries = [];
+          renderLogs();
+          showToast('Log canvas restored');
+        }
+      });
     });
 
-    // Launch Root Action
+    // Initial ready state log line
+    addLogEntry('Ready · Review detected KMI and launch root');
+
+    // Launch Root Action with Real-Time Sticky Status Bar
     btnLaunch.addEventListener('click', () => {
       btnLaunch.disabled = true;
       btnLaunch.textContent = 'Launching...';
-      logBox.textContent = '[*] Starting DirtyFrag Android Root session...\\n';
-      
+      const startMs = Date.now();
+
+      statusProgress.classList.add('active');
+      statusIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>';
+      statusIcon.style.color = 'var(--primary)';
+      statusText.textContent = 'Executing payload...';
+      statusDuration.textContent = '';
+
+      logEntries = [];
+      addLogEntry('Starting DirtyFrag Android Root session...');
+
       const steps = [
-        '[+] Kernel version: 6.12.38-android16-5-gb575a0b6e647\\n',
-        '[+] Matched KMI: android16-6.12 (dirtyfrag-android16-6.12.ko)\\n',
-        '[+] Testing splice helper & memory mapping...\\n',
-        '[+] Staging ksud binary to device storage...\\n',
-        '[+] Applying kernel hook via DFRoot helper...\\n',
-        '[+] Checking /dev/df mount points...\\n',
-        '[+] Success: KernelSU daemon initiated.\\n'
+        'Kernel version: 6.12.38-android16-5-gb575a0b6e647',
+        'Scanning kernel build parameters...',
+        'Matched KMI: android16-6.12 (dirtyfrag-android16-6.12.ko)',
+        'Testing splice helper & memory mapping...',
+        'Staging ksud binary to device protected storage...',
+        'Applying kernel hook via DFRoot helper...',
+        'Checking /dev/df mount points...',
+        'Process exited with code 0 (Success: KernelSU daemon initiated).'
       ];
 
       steps.forEach((step, idx) => {
         setTimeout(() => {
-          logBox.textContent += step;
-          logBox.scrollTop = logBox.scrollHeight;
+          addLogEntry(step);
           if (idx === steps.length - 1) {
+            const elapsed = ((Date.now() - startMs) / 1000).toFixed(2);
             btnLaunch.disabled = false;
             btnLaunch.textContent = 'Launch root';
+            statusProgress.classList.remove('active');
+            statusIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+            statusIcon.style.color = 'var(--color-success)';
+            statusText.textContent = 'Process exited with code 0 (Completed in ' + elapsed + 's)';
+            statusDuration.textContent = elapsed + 's';
             showToast('DirtyFrag Android Root: SUCCESS');
           }
         }, (idx + 1) * 350);
       });
     });
 
-    // KO Selection Modal with Clean Mismatch Format: Kernel mismatch (X.XX vs Y.YY)
+    // KO Selection Modal styled like Screenshot 3 (Rounded pill selection) + Clean Mismatch format
     const BUNDLED_KMIS = [
       { name: 'android12-5.10', kernel: '5.10' },
       { name: 'android13-5.10', kernel: '5.10' },
@@ -986,15 +1378,15 @@ KMI: android16-6.12</div>
       
       // Option 0: Automatic
       const autoRow = document.createElement('div');
-      autoRow.className = 'ko-item-row';
       const isAuto = selectedKoIndex === 0;
+      autoRow.className = \`ko-item-card \${isAuto ? 'selected' : ''}\`;
       autoRow.innerHTML = \`
-        <div class="ko-radio \${isAuto ? 'checked' : ''}"></div>
+        <div class="ko-radio"></div>
         <div class="ko-info">
           <div class="ko-title">Automatic · dirtyfrag-android16-6.12.ko</div>
           <div class="ko-sub success">Exact KMI match for kernel (android16-6.12)</div>
         </div>
-        <div class="ko-indicator" style="color:var(--primary)">
+        <div class="ko-indicator" style="color:\${isAuto ? 'var(--on-secondary-container)' : 'var(--primary)'}">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
         </div>
       \`;
@@ -1011,14 +1403,14 @@ KMI: android16-6.12</div>
           : \`Kernel mismatch (\${kmi.kernel} vs \${DEVICE_KERNEL})\`;
 
         const row = document.createElement('div');
-        row.className = 'ko-item-row';
+        row.className = \`ko-item-card \${isChecked ? 'selected' : ''}\`;
         row.innerHTML = \`
-          <div class="ko-radio \${isChecked ? 'checked' : ''}"></div>
+          <div class="ko-radio"></div>
           <div class="ko-info">
             <div class="ko-title">dirtyfrag-\${kmi.name}.ko</div>
             <div class="ko-sub \${match ? 'success' : 'warning'}">\${subText}</div>
           </div>
-          <div class="ko-indicator" style="color:\${match ? 'var(--primary)' : 'var(--color-error)'}">
+          <div class="ko-indicator" style="color:\${match ? (isChecked ? 'var(--on-secondary-container)' : 'var(--primary)') : 'var(--color-error)'}">
             \${match 
               ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
               : '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>'}
@@ -1106,6 +1498,8 @@ KMI: android16-6.12</div>
         phone.setAttribute('data-theme', 'light');
         showToast('Light theme applied');
       }
+      // Re-synchronize current active tab pill appearance after theme change
+      selectTab(currentTabIndex);
     });
   </script>
 </body>
@@ -1114,8 +1508,9 @@ KMI: android16-6.12</div>
 
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found');
-});
+}
 
+const server = http.createServer(handleRequest);
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`DirtyFrag App Server running on http://0.0.0.0:${PORT}`);
 });

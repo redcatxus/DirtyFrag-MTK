@@ -30,6 +30,11 @@
     <color name="log_background">#EEF2F6</color>
     <color name="log_ink">#1A1C1E</color>
     <color name="log_accent">#00639B</color>
+    <color name="log_timestamp">#73777F</color>
+    <color name="log_info">#43474E</color>
+    <color name="log_warn">#7D5700</color>
+    <color name="log_error">#BA1A1A</color>
+    <color name="log_success">#146C2E</color>
 
     <color name="nav_ripple">#2000639B</color>
 </resources>

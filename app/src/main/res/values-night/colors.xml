@@ -27,9 +27,14 @@
     <color name="page_background">#0E1114</color>
 
     <!-- Run log terminal -->
-    <color name="log_background">#080B10</color>
+    <color name="log_background">#0D0E11</color>
     <color name="log_ink">#E6EDF3</color>
-    <color name="log_accent">#79C0FF</color>
+    <color name="log_accent">#92CCFF</color>
+    <color name="log_timestamp">#8D9199</color>
+    <color name="log_info">#C3C6CF</color>
+    <color name="log_warn">#FFD566</color>
+    <color name="log_error">#F2B8B5</color>
+    <color name="log_success">#7BD58C</color>
 
     <color name="nav_ripple">#2692CCFF</color>
 </resources>

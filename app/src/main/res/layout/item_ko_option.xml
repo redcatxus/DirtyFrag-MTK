@@ -1,63 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/itemContainer"
+    android:id="@+id/itemCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="56dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
     android:clickable="true"
     android:focusable="true"
-    android:background="?android:attr/selectableItemBackground"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@android:color/transparent">
 
-    <!-- RadioButton on left (matching Screenshot 2) -->
-    <RadioButton
-        android:id="@+id/itemRadio"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
-        app:buttonTint="?attr/colorPrimary" />
-
-    <!-- Title & Subtitle in middle -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/itemRow"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="14dp"
-        android:layout_marginEnd="10dp"
-        android:orientation="vertical">
+        android:minHeight="54dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/itemTitle"
+        <!-- RadioButton on left -->
+        <RadioButton
+            android:id="@+id/itemRadio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp"
-            android:fontFamily="monospace"
-            android:textStyle="bold" />
+            android:clickable="false"
+            android:focusable="false"
+            app:buttonTint="?attr/colorPrimary" />
 
-        <TextView
-            android:id="@+id/itemSubtitle"
-            android:layout_width="wrap_content"
+        <!-- Title & Subtitle in middle -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp" />
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/itemTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="13.5sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/itemSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Status Indicator Icon on right (error or checkmark) -->
+        <ImageView
+            android:id="@+id/itemIndicator"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="Compatibility status"
+            android:src="@drawable/ic_error_outline_24"
+            app:tint="?attr/colorError" />
     </LinearLayout>
-
-    <!-- Exclamation mark / Incompatibility indicator on right (matching Screenshot 2) -->
-    <ImageView
-        android:id="@+id/itemIndicator"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:contentDescription="Compatibility status"
-        android:src="@drawable/ic_error_outline_24"
-        app:tint="?attr/colorError" />
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

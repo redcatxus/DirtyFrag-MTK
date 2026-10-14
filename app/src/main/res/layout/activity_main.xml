@@ -178,7 +178,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="16dp">
 
                         <!-- Log Header with Material You Action Box -->
                         <LinearLayout
@@ -197,7 +197,7 @@
                                 android:textStyle="bold"
                                 android:letterSpacing="0.08" />
 
-                            <!-- Material You Action Box for Copy, Share, Save & Clear -->
+                            <!-- Action Box for Auto-Scroll, Copy, Share, Save & Clear -->
                             <com.google.android.material.card.MaterialCardView
                                 android:layout_width="wrap_content"
                                 android:layout_height="34dp"
@@ -212,6 +212,22 @@
                                     android:layout_height="match_parent"
                                     android:gravity="center_vertical"
                                     android:orientation="horizontal">
+
+                                    <androidx.appcompat.widget.AppCompatImageButton
+                                        android:id="@+id/btnToggleScrollLock"
+                                        android:layout_width="34dp"
+                                        android:layout_height="match_parent"
+                                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Toggle auto-scroll lock"
+                                        android:padding="8dp"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/ic_vertical_align_bottom_24"
+                                        app:tint="?attr/colorPrimary" />
+
+                                    <View
+                                        android:layout_width="1dp"
+                                        android:layout_height="18dp"
+                                        android:background="?attr/colorOutlineVariant" />
 
                                     <androidx.appcompat.widget.AppCompatImageButton
                                         android:id="@+id/btnCopyLogs"
@@ -275,29 +291,178 @@
                             </com.google.android.material.card.MaterialCardView>
                         </LinearLayout>
 
-                        <!-- Terminal scroll view -->
+                        <!-- M3 FilterChip Row -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none"
+                            android:overScrollMode="never">
+
+                            <com.google.android.material.chip.ChipGroup
+                                android:id="@+id/logFilterGroup"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:singleSelection="true"
+                                app:selectionRequired="true">
+
+                                <com.google.android.material.chip.Chip
+                                    android:id="@+id/chipFilterAll"
+                                    style="@style/Widget.Material3.Chip.Filter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:checked="true"
+                                    android:text="All"
+                                    android:textSize="12sp" />
+
+                                <com.google.android.material.chip.Chip
+                                    android:id="@+id/chipFilterErrors"
+                                    style="@style/Widget.Material3.Chip.Filter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Errors Only"
+                                    android:textSize="12sp" />
+
+                                <com.google.android.material.chip.Chip
+                                    android:id="@+id/chipFilterKernel"
+                                    style="@style/Widget.Material3.Chip.Filter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Kernel Output"
+                                    android:textSize="12sp" />
+
+                                <com.google.android.material.chip.Chip
+                                    android:id="@+id/chipFilterVerbose"
+                                    style="@style/Widget.Material3.Chip.Filter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Verbose"
+                                    android:textSize="12sp" />
+                            </com.google.android.material.chip.ChipGroup>
+                        </HorizontalScrollView>
+
+                        <!-- Real-time Sticky Status Bar -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/statusBanner"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:cardCornerRadius="10dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="?attr/colorOutlineVariant"
+                            app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <com.google.android.material.progressindicator.LinearProgressIndicator
+                                    android:id="@+id/statusProgress"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="3dp"
+                                    android:indeterminate="true"
+                                    android:visibility="gone"
+                                    app:indicatorColor="?attr/colorPrimary"
+                                    app:trackColor="@android:color/transparent" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="32dp"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingStart="10dp"
+                                    android:paddingEnd="10dp">
+
+                                    <ImageView
+                                        android:id="@+id/statusIcon"
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_check_circle_24"
+                                        app:tint="?attr/colorPrimary" />
+
+                                    <TextView
+                                        android:id="@+id/statusText"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginStart="8dp"
+                                        android:text="Ready · Review detected KMI and launch root"
+                                        android:textColor="?attr/colorOnSurface"
+                                        android:textSize="12sp"
+                                        android:maxLines="1"
+                                        android:ellipsize="end" />
+
+                                    <TextView
+                                        android:id="@+id/statusDuration"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="?attr/colorOnSurfaceVariant"
+                                        android:textSize="11sp"
+                                        android:fontFamily="monospace"
+                                        android:visibility="gone" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Terminal scroll view with gutter -->
                         <df.root.LogScrollView
                             android:id="@+id/outputScroll"
                             android:layout_width="match_parent"
-                            android:layout_height="240dp"
-                            android:layout_marginTop="10dp"
+                            android:layout_height="250dp"
+                            android:layout_marginTop="8dp"
                             android:background="@drawable/log_background"
                             android:fillViewport="true"
                             android:nestedScrollingEnabled="false"
                             android:scrollbars="vertical"
                             android:fadeScrollbars="false"
-                            android:padding="12dp">
+                            android:paddingStart="6dp"
+                            android:paddingTop="10dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="10dp">
 
-                            <TextView
-                                android:id="@+id/outputView"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="monospace"
-                                android:lineSpacingExtra="3dp"
-                                android:text="Ready. Review the detected KMI and selected module before launching."
-                                android:textColor="@color/log_ink"
-                                android:textIsSelectable="true"
-                                android:textSize="12sp" />
+                                android:orientation="horizontal">
+
+                                <!-- Line Number Gutter -->
+                                <TextView
+                                    android:id="@+id/gutterView"
+                                    android:layout_width="28dp"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="monospace"
+                                    android:gravity="end"
+                                    android:lineSpacingExtra="4dp"
+                                    android:paddingEnd="6dp"
+                                    android:text="01"
+                                    android:textColor="?attr/colorOutline"
+                                    android:textSize="12sp"
+                                    android:focusable="false"
+                                    android:clickable="false" />
+
+                                <!-- Subtle vertical divider between gutter and log lines -->
+                                <View
+                                    android:layout_width="1dp"
+                                    android:layout_height="match_parent"
+                                    android:background="?attr/colorOutlineVariant"
+                                    android:alpha="0.4"
+                                    android:layout_marginEnd="8dp" />
+
+                                <!-- Formatted Monospace Output -->
+                                <TextView
+                                    android:id="@+id/outputView"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:fontFamily="monospace"
+                                    android:lineSpacingExtra="4dp"
+                                    android:text="Ready. Review the detected KMI and selected module before launching."
+                                    android:textColor="@color/log_ink"
+                                    android:textIsSelectable="true"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
                         </df.root.LogScrollView>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

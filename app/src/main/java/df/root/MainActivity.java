@@ -36,6 +36,18 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import androidx.core.content.ContextCompat;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 import df.root.databinding.ActivityMainBinding;
 
 import java.io.File;
@@ -71,14 +83,193 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final Executor mExec = Executors.newSingleThreadExecutor();
 
+    public enum LogLevel {
+        INFO, WARN, ERROR, SUCCESS, KERNEL, VERBOSE
+    }
+
+    public static class LogEntry {
+        public final long timestamp;
+        public final LogLevel level;
+        public final String rawMessage;
+        public final String formattedLine;
+
+        public LogEntry(long timestamp, LogLevel level, String rawMessage, String formattedLine) {
+            this.timestamp = timestamp;
+            this.level = level;
+            this.rawMessage = rawMessage;
+            this.formattedLine = formattedLine;
+        }
+    }
+
+    private static final int FILTER_ALL = 0;
+    private static final int FILTER_ERRORS = 1;
+    private static final int FILTER_KERNEL = 2;
+    private static final int FILTER_VERBOSE = 3;
+
+    private int mCurrentFilter = FILTER_ALL;
+    private boolean mAutoScrollLocked = false;
+    private final List<LogEntry> mLogEntries = new ArrayList<>();
+    private final List<LogEntry> mClearedLogEntries = new ArrayList<>();
+    private final SimpleDateFormat mTimeFormat = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+    private long mRunStartTime = 0;
+
+    private LogLevel detectLogLevel(String text) {
+        String lower = text.toLowerCase(Locale.US);
+        if (lower.contains("error") || lower.contains("failed") || lower.contains("fail:") ||
+            lower.contains("exception") || lower.contains("fatal") || lower.contains("abort") ||
+            lower.contains("could not") || lower.contains("cannot") || lower.contains("mismatch detected")) {
+            return LogLevel.ERROR;
+        }
+        if (lower.contains("warn") || lower.contains("warning") || lower.contains("mismatch") ||
+            lower.contains("unrecognized") || lower.contains("fallback")) {
+            return LogLevel.WARN;
+        }
+        if (lower.contains("success") || lower.contains("completed") || lower.contains("succeeded") ||
+            lower.contains("root: success") || lower.contains("daemon initiated")) {
+            return LogLevel.SUCCESS;
+        }
+        if (lower.contains("kernel") || lower.contains("kmi") || lower.contains("dirtyfrag") ||
+            lower.contains("lkm") || lower.contains("module") || lower.contains("splice") ||
+            lower.contains("/dev/df") || lower.contains("ipsec") || lower.contains("spi:") ||
+            lower.contains("encap port:") || lower.contains("vermagic")) {
+            return LogLevel.KERNEL;
+        }
+        if (lower.contains("verbose") || lower.contains("debug") || lower.contains("stage") ||
+            lower.contains("setup")) {
+            return LogLevel.VERBOSE;
+        }
+        return LogLevel.INFO;
+    }
+
+    private String getLevelTag(LogLevel level) {
+        switch (level) {
+            case WARN: return "[WARN]  ";
+            case ERROR: return "[ERROR] ";
+            case SUCCESS: return "[SUCC]  ";
+            case KERNEL: return "[KERN]  ";
+            case VERBOSE: return "[VERB]  ";
+            case INFO:
+            default:
+                return "[INFO]  ";
+        }
+    }
+
+    private boolean matchesFilter(LogEntry entry, int filter) {
+        switch (filter) {
+            case FILTER_ERRORS:
+                return entry.level == LogLevel.ERROR;
+            case FILTER_KERNEL:
+                return entry.level == LogLevel.KERNEL;
+            case FILTER_VERBOSE:
+                return true;
+            case FILTER_ALL:
+            default:
+                return true;
+        }
+    }
+
+    private int getColorForLevel(LogLevel level) {
+        switch (level) {
+            case ERROR:
+                return MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, 0xFFF2B8B5);
+            case WARN:
+                return MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiary, 0xFFFFD566);
+            case SUCCESS:
+                return ContextCompat.getColor(this, R.color.log_success);
+            case KERNEL:
+                return MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, 0xFF92CCFF);
+            case VERBOSE:
+            case INFO:
+            default:
+                return MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, 0xFFC3C6CF);
+        }
+    }
+
+    private void appendLogLine(String rawLine) {
+        String trimmed = rawLine.trim();
+        if (trimmed.isEmpty()) return;
+
+        // Strip legacy prefixes if present
+        if (trimmed.startsWith("[+]") || trimmed.startsWith("[*]") || trimmed.startsWith("[-]")) {
+            trimmed = trimmed.substring(3).trim();
+        }
+
+        LogLevel level = detectLogLevel(trimmed);
+        long now = System.currentTimeMillis();
+        String timeStr = mTimeFormat.format(new Date(now));
+        String tag = getLevelTag(level);
+        String formatted = "[" + timeStr + "]  " + tag + " " + trimmed;
+
+        LogEntry entry = new LogEntry(now, level, trimmed, formatted);
+        mLogEntries.add(entry);
+        renderLogs();
+    }
+
+    private void renderLogs() {
+        if (binding == null) return;
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
+        int lineCount = 0;
+
+        int metaColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, Color.GRAY);
+        int textColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.WHITE);
+
+        for (LogEntry entry : mLogEntries) {
+            if (!matchesFilter(entry, mCurrentFilter)) continue;
+            lineCount++;
+
+            int start = ssb.length();
+            ssb.append(entry.formattedLine).append("\n");
+
+            // Fixed-width timestamp [HH:mm:ss.SSS] (14 chars)
+            int timeEnd = start + 14;
+            if (timeEnd <= ssb.length()) {
+                ssb.setSpan(new ForegroundColorSpan(metaColor), start, timeEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            // Fixed-width level token [LEVEL] (8 chars: index 16 to 24)
+            int levelStart = start + 16;
+            int levelEnd = levelStart + 8;
+            if (levelEnd <= ssb.length()) {
+                int levelColor = getColorForLevel(entry.level);
+                ssb.setSpan(new ForegroundColorSpan(levelColor), levelStart, levelEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            // Message text
+            int msgStart = start + 25;
+            int msgEnd = ssb.length() - 1;
+            if (msgStart < msgEnd) {
+                ssb.setSpan(new ForegroundColorSpan(textColor), msgStart, msgEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+
+        binding.outputView.setText(ssb);
+
+        // Incremental line number gutter: 01, 02, 03...
+        if (lineCount == 0) {
+            binding.gutterView.setText("01");
+        } else {
+            StringBuilder gutter = new StringBuilder();
+            for (int i = 1; i <= lineCount; i++) {
+                gutter.append(String.format(Locale.US, "%02d\n", i));
+            }
+            binding.gutterView.setText(gutter.toString().trim());
+        }
+
+        // Auto-scroll lock behavior
+        if (!mAutoScrollLocked) {
+            binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+        }
+    }
+
     @Override
     public void report(String msg) {
         Log.i(TAG, msg.trim());
         mMain.post(() -> {
-            boolean followTail = !binding.outputScroll.canScrollVertically(1);
-            binding.outputView.append(msg);
-            if (followTail) {
-                binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+            String[] lines = msg.split("\\r?\\n");
+            for (String line : lines) {
+                if (!line.trim().isEmpty()) {
+                    appendLogLine(line);
+                }
             }
         });
     }
@@ -116,6 +307,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             binding.appBarLayout.setBackgroundColor(Color.BLACK);
             binding.toolbar.setBackgroundColor(Color.BLACK);
             getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+            binding.cardLogs.setCardBackgroundColor(Color.BLACK);
         }
 
         // Configure theme toggle button on top right next to label
@@ -151,6 +343,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             }
         });
 
+        int initialTab = themePrefs.getInt("active_tab", 0);
+        binding.viewPager.setCurrentItem(initialTab, false);
+
         // Measure initial natural text widths for exact 1:1 scroll synchronization
         ensureTextWidths();
 
@@ -163,9 +358,8 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
             @Override
             public void onPageSelected(int position) {
-                // Do not update tab scroll here: onPageSelected is called at 50% midpoint
-                // during swipes and at the start of setCurrentItem, which breaks the fluid animation.
-                // The visual sync is driven continuously by onPageScrolled and finalized on SCROLL_STATE_IDLE.
+                getSharedPreferences("theme_prefs", MODE_PRIVATE).edit()
+                        .putInt("active_tab", position).apply();
             }
 
             @Override
@@ -176,18 +370,67 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             }
         });
 
-        // Tab click listeners drive smooth page scroll, which naturally drives the landing animation
-        binding.tabHomePill.setOnClickListener(v -> binding.viewPager.setCurrentItem(0, true));
-        binding.tabSettingsPill.setOnClickListener(v -> binding.viewPager.setCurrentItem(1, true));
+        // Tab click listeners drive smooth page scroll without premature offset snapping
+        binding.tabHomePill.setOnClickListener(v -> {
+            if (binding.viewPager.getCurrentItem() != 0) {
+                binding.viewPager.setCurrentItem(0, true);
+            }
+        });
+        binding.tabSettingsPill.setOnClickListener(v -> {
+            if (binding.viewPager.getCurrentItem() != 1) {
+                binding.viewPager.setCurrentItem(1, true);
+            }
+        });
 
-        // Initial landing state
-        updateNavTabScroll(0, 0f);
+        // Initial landing state matching restored tab
+        updateNavTabScroll(initialTab, 0f);
+        binding.viewPager.post(() -> {
+            ensureTextWidths();
+            int cur = binding.viewPager.getCurrentItem();
+            updateNavTabScroll(cur, 0f);
+        });
 
-        // Run log action buttons (Copy, Share, Save as file, Clear)
+        // Auto-Scroll Lock toggle button
+        binding.btnToggleScrollLock.setOnClickListener(v -> {
+            mAutoScrollLocked = !mAutoScrollLocked;
+            int primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, Color.BLUE);
+            int tertiaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiary, Color.YELLOW);
+            if (mAutoScrollLocked) {
+                binding.btnToggleScrollLock.setImageResource(R.drawable.ic_lock_24);
+                binding.btnToggleScrollLock.setColorFilter(tertiaryColor);
+                Snackbar.make(binding.getRoot(), "Auto-scroll paused (locked)", Snackbar.LENGTH_SHORT).show();
+            } else {
+                binding.btnToggleScrollLock.setImageResource(R.drawable.ic_vertical_align_bottom_24);
+                binding.btnToggleScrollLock.setColorFilter(primaryColor);
+                Snackbar.make(binding.getRoot(), "Auto-scroll resumed", Snackbar.LENGTH_SHORT).show();
+                binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+            }
+        });
+
+        // M3 FilterChip Row (All | Errors Only | Kernel Output | Verbose)
+        binding.logFilterGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            if (id == R.id.chipFilterErrors) {
+                mCurrentFilter = FILTER_ERRORS;
+            } else if (id == R.id.chipFilterKernel) {
+                mCurrentFilter = FILTER_KERNEL;
+            } else if (id == R.id.chipFilterVerbose) {
+                mCurrentFilter = FILTER_VERBOSE;
+            } else {
+                mCurrentFilter = FILTER_ALL;
+            }
+            renderLogs();
+        });
+
+        // Run log action buttons (Copy, Share, Save as file, Clear with undo)
         binding.btnCopyLogs.setOnClickListener(v -> copyLogsToClipboard());
         binding.btnShareLogs.setOnClickListener(v -> shareLogs());
         binding.btnSaveLogs.setOnClickListener(v -> saveLogsAsFile());
         binding.btnClearLogs.setOnClickListener(v -> clearLogs());
+
+        // Initial default log line
+        appendLogLine("Ready · Review detected KMI and launch root");
 
         updateDeviceProfile();
         updateKsudMode();
@@ -204,7 +447,8 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
         binding.btnRun.setOnClickListener(v -> {
             binding.btnRun.setEnabled(false);
-            binding.outputView.setText("");
+            mLogEntries.clear();
+            appendLogLine("Starting DirtyFrag Android Root session...");
             mExec.execute(this::runExploit);
         });
     }
@@ -216,13 +460,13 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     private void ensureTextWidths() {
         if (binding == null) return;
         float density = getResources().getDisplayMetrics().density;
-        if (mHomeTextWidth <= 0 && binding.tabHomeText != null) {
-            float textWidth = binding.tabHomeText.getPaint().measureText(binding.tabHomeText.getText().toString());
-            mHomeTextWidth = Math.round(textWidth + 2 * density);
+        if (binding.tabHomeText != null) {
+            float textWidth = binding.tabHomeText.getPaint().measureText("Home");
+            mHomeTextWidth = Math.max(Math.round(textWidth + 8 * density), Math.round(52 * density));
         }
-        if (mSettingsTextWidth <= 0 && binding.tabSettingsText != null) {
-            float textWidth = binding.tabSettingsText.getPaint().measureText(binding.tabSettingsText.getText().toString());
-            mSettingsTextWidth = Math.round(textWidth + 2 * density);
+        if (binding.tabSettingsText != null) {
+            float textWidth = binding.tabSettingsText.getPaint().measureText("Settings");
+            mSettingsTextWidth = Math.max(Math.round(textWidth + 8 * density), Math.round(72 * density));
         }
     }
 
@@ -303,7 +547,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm != null) {
             cm.setPrimaryClip(ClipData.newPlainText("DirtyFrag Run Log", text));
-            Toast.makeText(this, "Log copied to clipboard", Toast.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), "Formatted log copied to clipboard", Snackbar.LENGTH_SHORT).show();
         }
     }
 
@@ -363,8 +607,21 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     }
 
     private void clearLogs() {
-        binding.outputView.setText("");
-        Toast.makeText(this, "Log cleared", Toast.LENGTH_SHORT).show();
+        if (mLogEntries.isEmpty()) {
+            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mClearedLogEntries.clear();
+        mClearedLogEntries.addAll(mLogEntries);
+        mLogEntries.clear();
+        renderLogs();
+        Snackbar.make(binding.getRoot(), "Log canvas cleared", Snackbar.LENGTH_LONG)
+                .setAction("Undo", v -> {
+                    mLogEntries.addAll(mClearedLogEntries);
+                    mClearedLogEntries.clear();
+                    renderLogs();
+                })
+                .show();
     }
 
     private void selectPayload(int requestCode) {
@@ -699,7 +956,16 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         String selected = normalizedKoSelection();
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_ko_selection, null);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
         LinearLayout listContainer = dialogView.findViewById(R.id.koOptionsList);
+        View btnCancel = dialogView.findViewById(R.id.btnCancelKo);
+        View btnConfirm = dialogView.findViewById(R.id.btnConfirmKo);
 
         int totalOptions = BUNDLED_KMIS.length + 1 + (customKo.isFile() ? 1 : 0);
         int currentPos = 0;
@@ -715,46 +981,79 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
 
         final int[] selectedIndex = {currentPos};
+        final com.google.android.material.card.MaterialCardView[] cardViews = new com.google.android.material.card.MaterialCardView[totalOptions];
         final RadioButton[] radioButtons = new RadioButton[totalOptions];
+        final TextView[] titleViews = new TextView[totalOptions];
+        final TextView[] subtitleViews = new TextView[totalOptions];
+        final boolean[] isCompatibleArray = new boolean[totalOptions];
 
         int colorPrimary = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, Color.BLUE);
         int colorError = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, Color.RED);
+        int colorOnSurface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.WHITE);
         int colorOnSurfaceVariant = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY);
+        int secondaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondaryContainer, Color.DKGRAY);
+        int onSecondaryContainer = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.WHITE);
+
+        Runnable refreshSelectedStyles = () -> {
+            for (int r = 0; r < totalOptions; r++) {
+                boolean isSel = (r == selectedIndex[0]);
+                if (cardViews[r] != null) {
+                    cardViews[r].setCardBackgroundColor(isSel ? secondaryContainer : Color.TRANSPARENT);
+                }
+                if (radioButtons[r] != null) {
+                    radioButtons[r].setChecked(isSel);
+                }
+                if (titleViews[r] != null) {
+                    titleViews[r].setTextColor(isSel ? onSecondaryContainer : colorOnSurface);
+                }
+                if (subtitleViews[r] != null) {
+                    if (!isCompatibleArray[r]) {
+                        subtitleViews[r].setTextColor(colorError);
+                    } else {
+                        subtitleViews[r].setTextColor(isSel ? onSecondaryContainer : colorOnSurfaceVariant);
+                    }
+                }
+            }
+        };
 
         for (int i = 0; i < totalOptions; i++) {
             final int pos = i;
             View row = getLayoutInflater().inflate(R.layout.item_ko_option, listContainer, false);
+            com.google.android.material.card.MaterialCardView card = row.findViewById(R.id.itemCard);
             RadioButton radio = row.findViewById(R.id.itemRadio);
             TextView title = row.findViewById(R.id.itemTitle);
             TextView subtitle = row.findViewById(R.id.itemSubtitle);
             ImageView indicator = row.findViewById(R.id.itemIndicator);
 
+            cardViews[i] = card;
             radioButtons[i] = radio;
-            radio.setChecked(i == currentPos);
+            titleViews[i] = title;
+            subtitleViews[i] = subtitle;
 
+            boolean compatible = true;
             if (i == 0) {
                 // Automatic option
                 title.setText(autoKmi == null
                         ? "Automatic · no match"
                         : "Automatic · dirtyfrag-" + autoKmi + ".ko");
                 if (autoKmi == null) {
+                    compatible = false;
                     subtitle.setText("No Android KMI match found in uname");
                     subtitle.setTextColor(colorError);
                     indicator.setImageResource(R.drawable.ic_error_outline_24);
                     indicator.setColorFilter(colorError);
                 } else if (autoKmi.equals(currentKmi())) {
                     subtitle.setText("Exact KMI match for kernel (" + autoKmi + ")");
-                    subtitle.setTextColor(colorOnSurfaceVariant);
                     indicator.setImageResource(R.drawable.ic_check_circle_24);
                     indicator.setColorFilter(colorPrimary);
                 } else {
                     boolean fallbackCompatible = sameKernelVersion(autoKmi, currentKmi());
                     if (fallbackCompatible) {
                         subtitle.setText("Fallback variant for " + currentKmiLabel());
-                        subtitle.setTextColor(colorOnSurfaceVariant);
                         indicator.setImageResource(R.drawable.ic_check_circle_24);
                         indicator.setColorFilter(colorPrimary);
                     } else {
+                        compatible = false;
                         String modKernel = kernelVersion(autoKmi);
                         String devKernel = currentKernelVersion() != null ? currentKernelVersion() : "unknown";
                         subtitle.setText("Kernel mismatch (" + modKernel + " vs " + devKernel + ")");
@@ -769,17 +1068,15 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                         .getString("custom_ko_label", "custom module");
                 title.setText("Custom file · " + label);
                 subtitle.setText("Manual DFRoot helper loaded from storage");
-                subtitle.setTextColor(colorOnSurfaceVariant);
                 indicator.setImageResource(R.drawable.ic_check_circle_24);
                 indicator.setColorFilter(colorPrimary);
             } else {
                 // Bundled KMI option
                 String kmi = BUNDLED_KMIS[i - 1];
-                boolean compatible = sameKernelVersion(kmi, currentKmi());
+                compatible = sameKernelVersion(kmi, currentKmi());
                 title.setText("dirtyfrag-" + kmi + ".ko");
                 if (compatible) {
                     subtitle.setText("Matches kernel version (" + kernelVersion(kmi) + ")");
-                    subtitle.setTextColor(colorOnSurfaceVariant);
                     indicator.setImageResource(R.drawable.ic_check_circle_24);
                     indicator.setColorFilter(colorPrimary);
                 } else {
@@ -792,22 +1089,29 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                     indicator.setColorFilter(colorError);
                 }
             }
+            isCompatibleArray[i] = compatible;
 
             row.setOnClickListener(v -> {
                 selectedIndex[0] = pos;
-                for (int r = 0; r < totalOptions; r++) {
-                    if (radioButtons[r] != null) radioButtons[r].setChecked(r == pos);
-                }
+                refreshSelectedStyles.run();
             });
 
             listContainer.addView(row);
         }
 
-        new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
-                .setNegativeButton("Cancel", (d, w) -> d.dismiss())
-                .setPositiveButton("OK", (d, w) -> onKoSelection(selectedIndex[0]))
-                .show();
+        refreshSelectedStyles.run();
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+        if (btnConfirm != null) {
+            btnConfirm.setOnClickListener(v -> {
+                dialog.dismiss();
+                onKoSelection(selectedIndex[0]);
+            });
+        }
+
+        dialog.show();
     }
 
     private String normalizedKoSelection() {
@@ -1012,10 +1316,12 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     }
 
     private void applyThemeChoice(boolean isDark, boolean isAmoled) {
+        int currentTab = (binding != null && binding.viewPager != null) ? binding.viewPager.getCurrentItem() : 0;
         SharedPreferences themePrefs = getSharedPreferences("theme_prefs", MODE_PRIVATE);
         themePrefs.edit()
                 .putString("theme_mode", isDark ? "dark" : "light")
                 .putBoolean("theme_amoled", isAmoled)
+                .putInt("active_tab", currentTab)
                 .apply();
 
         int targetMode = isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
@@ -1039,16 +1345,56 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     }
 
     private void runExploit() {
+        mRunStartTime = System.currentTimeMillis();
+        int primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, Color.BLUE);
+        int successColor = ContextCompat.getColor(this, R.color.log_success);
+        int errorColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, Color.RED);
+
+        mMain.post(() -> {
+            binding.statusProgress.setVisibility(View.VISIBLE);
+            binding.statusIcon.setImageResource(R.drawable.ic_settings_24);
+            binding.statusIcon.setColorFilter(primaryColor);
+            binding.statusText.setText("Executing payload...");
+            binding.statusDuration.setVisibility(View.GONE);
+        });
+
         try {
             int rc = ExploitRunner.run(this, this);
-            String msg = rc == 0 ? "DirtyFrag Android Root: SUCCESS"
-                       : rc == 1 ? "FAILED: ksud exited with error"
-                       : rc == 2 ? "FAILED: check logs"
-                       : "FAILED: failed to patch files";
-            mMain.post(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
+            long elapsed = System.currentTimeMillis() - mRunStartTime;
+            String durStr = String.format(Locale.US, "%.2fs", elapsed / 1000.0);
+
+            if (rc == 0) {
+                mMain.post(() -> {
+                    binding.statusProgress.setVisibility(View.GONE);
+                    binding.statusIcon.setImageResource(R.drawable.ic_check_circle_24);
+                    binding.statusIcon.setColorFilter(successColor);
+                    binding.statusText.setText("Process exited with code 0 (Completed in " + durStr + ")");
+                    binding.statusDuration.setVisibility(View.VISIBLE);
+                    binding.statusDuration.setText(durStr);
+                    Toast.makeText(this, "DirtyFrag Android Root: SUCCESS", Toast.LENGTH_LONG).show();
+                });
+            } else {
+                mMain.post(() -> {
+                    binding.statusProgress.setVisibility(View.GONE);
+                    binding.statusIcon.setImageResource(R.drawable.ic_error_outline_24);
+                    binding.statusIcon.setColorFilter(errorColor);
+                    binding.statusText.setText("Process terminated abruptly (Code " + rc + ")");
+                    binding.statusDuration.setVisibility(View.VISIBLE);
+                    binding.statusDuration.setText(durStr);
+                    Toast.makeText(this, "FAILED: code " + rc, Toast.LENGTH_LONG).show();
+                });
+            }
         } catch (Exception e) {
             Log.e(TAG, "exploit exception", e);
-            report("\nexception: " + e + "\n");
+            report("exception: " + e + "\n");
+            mMain.post(() -> {
+                binding.statusProgress.setVisibility(View.GONE);
+                binding.statusIcon.setImageResource(R.drawable.ic_error_outline_24);
+                binding.statusIcon.setColorFilter(errorColor);
+                binding.statusText.setText("Process terminated abruptly (Code 1)");
+                binding.statusDuration.setVisibility(View.VISIBLE);
+                binding.statusDuration.setText("Failed");
+            });
         } finally {
             mMain.post(this::updateRunAvailability);
         }
