@@ -13,7 +13,7 @@ active upstream project with newer fixes and improvements.**~~
 
 **If you own a MediaTek device and would like to test this fork/the upstream repo, kindly leave a GitHub Issue describing how it went.**
 
-DirtyFrag Android Root is an Android app and helper
+KittyFrag is an Android app and helper
 module chain based on DirtyFrag (CVE-2026-43284).
 Tested on iQOO Z9 5G (upstream) and Infinix HOT 60 Pro (personal).
 
