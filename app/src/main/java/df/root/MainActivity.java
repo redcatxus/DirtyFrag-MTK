@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         boolean isNight = (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES);
 
         if (isNight && amoled) {
-            setTheme(R.style.Theme_DirtyFrag_Amoled);
+            getTheme().applyStyle(R.style.ThemeOverlay_DirtyFrag_Amoled, true);
         }
 
         super.onCreate(savedInstanceState);
@@ -116,8 +116,6 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             binding.appBarLayout.setBackgroundColor(Color.BLACK);
             binding.toolbar.setBackgroundColor(Color.BLACK);
             getWindow().getDecorView().setBackgroundColor(Color.BLACK);
-            getWindow().setStatusBarColor(Color.BLACK);
-            getWindow().setNavigationBarColor(Color.BLACK);
         }
 
         // Configure theme toggle button on top right next to label
@@ -750,10 +748,20 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                     indicator.setImageResource(R.drawable.ic_check_circle_24);
                     indicator.setColorFilter(colorPrimary);
                 } else {
-                    subtitle.setText("Fallback variant for " + currentKmiLabel());
-                    subtitle.setTextColor(colorOnSurfaceVariant);
-                    indicator.setImageResource(R.drawable.ic_check_circle_24);
-                    indicator.setColorFilter(colorPrimary);
+                    boolean fallbackCompatible = sameKernelVersion(autoKmi, currentKmi());
+                    if (fallbackCompatible) {
+                        subtitle.setText("Fallback variant for " + currentKmiLabel());
+                        subtitle.setTextColor(colorOnSurfaceVariant);
+                        indicator.setImageResource(R.drawable.ic_check_circle_24);
+                        indicator.setColorFilter(colorPrimary);
+                    } else {
+                        String modKernel = kernelVersion(autoKmi);
+                        String devKernel = currentKernelVersion() != null ? currentKernelVersion() : "unknown";
+                        subtitle.setText("Kernel mismatch (" + modKernel + " vs " + devKernel + ")");
+                        subtitle.setTextColor(colorError);
+                        indicator.setImageResource(R.drawable.ic_error_outline_24);
+                        indicator.setColorFilter(colorError);
+                    }
                 }
             } else if (customKo.isFile() && i == totalOptions - 1) {
                 // Custom file option
@@ -775,8 +783,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                     indicator.setImageResource(R.drawable.ic_check_circle_24);
                     indicator.setColorFilter(colorPrimary);
                 } else {
-                    subtitle.setText("Different kernel (" + kernelVersion(kmi)
-                            + ", device is " + currentKernelVersion() + ")");
+                    String modKernel = kernelVersion(kmi);
+                    String devKernel = currentKernelVersion() != null ? currentKernelVersion() : "unknown";
+                    subtitle.setText("Kernel mismatch (" + modKernel + " vs " + devKernel + ")");
                     subtitle.setTextColor(colorError);
                     // Exclamation mark indicating incompatibility
                     indicator.setImageResource(R.drawable.ic_error_outline_24);
