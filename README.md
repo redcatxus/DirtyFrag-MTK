@@ -2,16 +2,20 @@
 
 ## ⚠️ **MTK Devices should avoid DFRoot for now**
 
-**Use the [DFRoot](https://github.com/diabl0w/DFRoot) instead. It is the
-active upstream project with newer fixes and improvements.**
+~~**Use the [DFRoot](https://github.com/diabl0w/DFRoot) instead. It is the
+active upstream project with newer fixes and improvements.**~~
 
-**DFRoot repository:** <https://github.com/diabl0w/DFRoot>
+~~**DFRoot repository:** <https://github.com/diabl0w/DFRoot>~~
+
+**Current upstream DFRoot implementation causes a kernel panic on many MediaTek devices. This standalone implementation was tested on two different MTK devices, and returned success.**
 
 DirtyFrag Android Root is an Android app and helper
 module chain based on DirtyFrag (CVE-2026-43284).
 Tested on iQOO Z9 5G (upstream) and Infinix HOT 60 Pro (personal).
 
 I touched up the app to make use of Dynamic Theming and Dark Mode.
+
+Any and all releases from this repository will NOT change the underlying code of the exploit. It will all be visual overhaul for my personal preferences.
 
 It is an independent DFRoot fork and device-port. The core DirtyFrag exploit chain is inherited and credited to DFRoot, LSPromise, DFReroot, and DirtyInit. This project adds a manual standalone flow, manager-neutral ksud loading, KMI/module selection, vendor-target fallbacks, diagnostics, and a redesigned Android interface.
 
