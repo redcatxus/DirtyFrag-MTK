@@ -28,7 +28,23 @@
             app:subtitle="Experimental Android root"
             app:subtitleTextColor="?attr/colorOnSurfaceVariant"
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
-            app:subtitleTextAppearance="@style/TextAppearance.Material3.BodySmall" />
+            app:subtitleTextAppearance="@style/TextAppearance.Material3.BodySmall">
+
+            <!-- Theme toggle button on the top right, next to the label -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnThemeToggle"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Appearance and theme"
+                app:icon="@drawable/ic_dark_mode_24"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="22dp"
+                app:iconTint="?attr/colorOnSecondaryContainer" />
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- HORIZONTALLY SCROLLABLE VIEWPAGER (HOME & SETTINGS) -->
@@ -164,7 +180,7 @@
                         android:orientation="vertical"
                         android:padding="18dp">
 
-                        <!-- Log Header with Actions -->
+                        <!-- Log Header with Material You Action Box -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -181,27 +197,82 @@
                                 android:textStyle="bold"
                                 android:letterSpacing="0.08" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnCopyLogs"
-                                style="@style/Widget.Material3.Button.TextButton"
+                            <!-- Material You Action Box for Copy, Share, Save & Clear -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:minHeight="36dp"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:text="Copy"
-                                android:textSize="12sp" />
+                                android:layout_height="34dp"
+                                app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                                app:cardCornerRadius="10dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="?attr/colorOutlineVariant"
+                                app:strokeWidth="1dp">
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnClearLogs"
-                                style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:minHeight="36dp"
-                                android:paddingStart="8dp"
-                                android:paddingEnd="8dp"
-                                android:text="Clear"
-                                android:textSize="12sp" />
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <androidx.appcompat.widget.AppCompatImageButton
+                                        android:id="@+id/btnCopyLogs"
+                                        android:layout_width="34dp"
+                                        android:layout_height="match_parent"
+                                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Copy log"
+                                        android:padding="8dp"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/ic_copy_24"
+                                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                                    <View
+                                        android:layout_width="1dp"
+                                        android:layout_height="18dp"
+                                        android:background="?attr/colorOutlineVariant" />
+
+                                    <androidx.appcompat.widget.AppCompatImageButton
+                                        android:id="@+id/btnShareLogs"
+                                        android:layout_width="34dp"
+                                        android:layout_height="match_parent"
+                                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Share log"
+                                        android:padding="8dp"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/ic_share_24"
+                                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                                    <View
+                                        android:layout_width="1dp"
+                                        android:layout_height="18dp"
+                                        android:background="?attr/colorOutlineVariant" />
+
+                                    <androidx.appcompat.widget.AppCompatImageButton
+                                        android:id="@+id/btnSaveLogs"
+                                        android:layout_width="34dp"
+                                        android:layout_height="match_parent"
+                                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Save log as file"
+                                        android:padding="8dp"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/ic_save_24"
+                                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                                    <View
+                                        android:layout_width="1dp"
+                                        android:layout_height="18dp"
+                                        android:background="?attr/colorOutlineVariant" />
+
+                                    <androidx.appcompat.widget.AppCompatImageButton
+                                        android:id="@+id/btnClearLogs"
+                                        android:layout_width="34dp"
+                                        android:layout_height="match_parent"
+                                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Clear log"
+                                        android:padding="8dp"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/ic_clear_24"
+                                        app:tint="?attr/colorOnSurfaceVariant" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
                         </LinearLayout>
 
                         <!-- Terminal scroll view -->
@@ -357,21 +428,63 @@
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="13sp" />
 
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/koSelectionLayout"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        <!-- Sleek Selector Card opening Material 3 Dialog (matching Screenshot 2) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btnOpenKoDialog"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:hint="Bundled DirtyFrag .ko">
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="?attr/colorOutlineVariant"
+                            app:strokeWidth="1dp">
 
-                            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                                android:id="@+id/koSelection"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="none"
-                                android:textColor="?attr/colorOnSurface" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="16dp"
+                                android:paddingTop="12dp"
+                                android:paddingEnd="16dp"
+                                android:paddingBottom="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Bundled DirtyFrag .ko"
+                                        android:textColor="?attr/colorOnSurfaceVariant"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:id="@+id/koSelectedTitle"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="monospace"
+                                        android:text="Automatic · dirtyfrag-android16-6.12.ko"
+                                        android:textColor="?attr/colorOnSurface"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_marginStart="8dp"
+                                    android:src="@drawable/ic_expand_more_24"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSelectKo"
@@ -479,7 +592,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="12dp"
-                    android:text="GitHub · @ankitrawatgit"
+                    android:text="GitHub · @ankitrawatgit / @redcatxus"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -489,16 +602,16 @@
         </androidx.core.widget.NestedScrollView>
     </androidx.viewpager.widget.ViewPager>
 
-    <!-- MDE3 FLOATING CAPSULE NAVIGATION BAR -->
+    <!-- MDE3 FLOATING CAPSULE NAVIGATION BAR (HORIZONTAL PILL EXPANDING STYLE) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/navCard"
         android:layout_width="wrap_content"
-        android:layout_height="66dp"
+        android:layout_height="62dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
         app:cardBackgroundColor="?attr/colorSurfaceContainer"
-        app:cardCornerRadius="33dp"
+        app:cardCornerRadius="31dp"
         app:cardElevation="8dp"
         app:strokeColor="?attr/colorOutlineVariant"
         app:strokeWidth="1dp"
@@ -506,18 +619,107 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNavigation"
-            android:layout_width="240dp"
+        <LinearLayout
+            android:id="@+id/navItemsContainer"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            app:elevation="0dp"
-            app:itemIconSize="22dp"
-            app:itemIconTint="@color/nav_item_icon_tint"
-            app:itemTextColor="@color/nav_item_text_tint"
-            app:itemPaddingTop="8dp"
-            app:itemPaddingBottom="8dp"
-            app:labelVisibilityMode="labeled"
-            app:menu="@menu/main_navigation" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <!-- Home Tab Pill (Horizontal Pill: Icon + Text when active) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tabHomePill"
+                android:layout_width="wrap_content"
+                android:layout_height="46dp"
+                android:minWidth="46dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                app:cardCornerRadius="23dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <ImageView
+                        android:id="@+id/tabHomeIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_home_24"
+                        app:tint="?attr/colorOnSecondaryContainer" />
+
+                    <TextView
+                        android:id="@+id/tabHomeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Home"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:ellipsize="none"
+                        android:textColor="?attr/colorOnSecondaryContainer"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textStyle="bold"
+                        android:visibility="visible" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Spacing between items -->
+            <View
+                android:layout_width="6dp"
+                android:layout_height="1dp" />
+
+            <!-- Settings Tab Pill (Icon only when inactive, Icon + Text when active) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tabSettingsPill"
+                android:layout_width="wrap_content"
+                android:layout_height="46dp"
+                android:minWidth="46dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="23dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <ImageView
+                        android:id="@+id/tabSettingsIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_settings_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/tabSettingsText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Settings"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:ellipsize="none"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

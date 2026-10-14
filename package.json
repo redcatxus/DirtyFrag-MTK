@@ -1,0 +1,12 @@
+{
+  "name": "dirtyfrag-mtk",
+  "version": "3.0.0",
+  "description": "DirtyFrag Android Root App & Web Preview",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build completed')\""
+  },
+  "dependencies": {}
+}

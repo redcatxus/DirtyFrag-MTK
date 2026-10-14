@@ -21,19 +21,38 @@ android {
         }
     }
 
+    signingConfigs {
+        create("debugConfig") {
+            storeFile = file("${rootDir}/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debugConfig")
         }
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debugConfig")
             isMinifyEnabled = false
         }
     }
 
     applicationVariants.all {
-        outputs.all {
-            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "dirtyfrag.apk"
+        val variant = this
+        variant.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            variant.assembleProvider.configure {
+                doLast {
+                    val apk = output.outputFile
+                    if (apk.exists()) {
+                        val dirtyfragApk = File(apk.parentFile, "dirtyfrag.apk")
+                        apk.copyTo(dirtyfragApk, overwrite = true)
+                    }
+                }
+            }
         }
     }
 
