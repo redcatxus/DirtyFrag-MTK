@@ -5,10 +5,11 @@ const path = require('path');
 const PORT = 3000;
 const APK_DIR = path.join(__dirname, 'app/build/outputs/apk/debug');
 const APK_PATH = path.join(APK_DIR, 'app-debug.apk');
+const KITTYFRAG_APK_PATH = path.join(APK_DIR, 'kittyfrag.apk');
 const DIRTYFRAG_APK_PATH = path.join(APK_DIR, 'dirtyfrag.apk');
 
 function getApkStats() {
-    let target = fs.existsSync(DIRTYFRAG_APK_PATH) ? DIRTYFRAG_APK_PATH : APK_PATH;
+    let target = fs.existsSync(KITTYFRAG_APK_PATH) ? KITTYFRAG_APK_PATH : (fs.existsSync(DIRTYFRAG_APK_PATH) ? DIRTYFRAG_APK_PATH : APK_PATH);
     if (fs.existsSync(target)) {
         const stats = fs.statSync(target);
         return {
@@ -19,7 +20,7 @@ function getApkStats() {
             filename: path.basename(target)
         };
     }
-    return { available: false, sizeBytes: 0, sizeMb: '0', mtime: null, filename: 'app-debug.apk' };
+    return { available: false, sizeBytes: 0, sizeMb: '0', mtime: null, filename: 'kittyfrag.apk' };
 }
 
 function handleRequest(req, res) {
@@ -27,7 +28,7 @@ function handleRequest(req, res) {
 
     // Download APK routes
     if (url.pathname === '/download/dirtyfrag.apk' || url.pathname === '/download/kittyfrag.apk' || url.pathname === '/download/app-debug.apk' || url.pathname === '/download') {
-        const target = fs.existsSync(DIRTYFRAG_APK_PATH) ? DIRTYFRAG_APK_PATH : APK_PATH;
+        const target = fs.existsSync(KITTYFRAG_APK_PATH) ? KITTYFRAG_APK_PATH : (fs.existsSync(DIRTYFRAG_APK_PATH) ? DIRTYFRAG_APK_PATH : APK_PATH);
         if (fs.existsSync(target)) {
             const stat = fs.statSync(target);
             res.writeHead(200, {

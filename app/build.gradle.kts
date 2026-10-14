@@ -50,6 +50,8 @@ android {
                     if (apk.exists()) {
                         val dirtyfragApk = File(apk.parentFile, "dirtyfrag.apk")
                         apk.copyTo(dirtyfragApk, overwrite = true)
+                        val kittyfragApk = File(apk.parentFile, "kittyfrag.apk")
+                        apk.copyTo(kittyfragApk, overwrite = true)
                     }
                 }
             }

@@ -25,7 +25,7 @@
             android:paddingEnd="12dp"
             android:title="KittyFrag"
             android:titleTextColor="?attr/colorOnSurface"
-            app:logo="@mipmap/ic_launcher"
+            app:logo="@drawable/kittyfrag_icon"
             app:subtitle="Experimental Android root"
             app:subtitleTextColor="?attr/colorOnSurfaceVariant"
             app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
