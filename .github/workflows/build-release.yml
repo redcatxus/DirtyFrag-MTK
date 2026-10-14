@@ -52,6 +52,23 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Ensure debug keystore exists
+        run: |
+          # app/build.gradle.kts signs both build types with a debug keystore
+          # at the repo root, but that keystore is never committed (debug
+          # keystores are machine-local and regenerated on demand). Create it
+          # here with the standard Android debug-keystore credentials that
+          # build.gradle.kts already hardcodes, if it isn't already present.
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Build release APK
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
