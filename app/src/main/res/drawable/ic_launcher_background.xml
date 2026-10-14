@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Deep Dark Indigo Material You Palette Base -->
+    <path
+        android:fillColor="#131520"
+        android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Subtle Material You Tinted Tone Arc -->
+    <path
+        android:fillColor="#1A1E2E"
+        android:pathData="M0,0h108v54c-20,10 -88,10 -108,-10z" />
+</vector>

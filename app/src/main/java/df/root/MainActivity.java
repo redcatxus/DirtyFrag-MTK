@@ -171,17 +171,17 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     private int getColorForLevel(LogLevel level) {
         switch (level) {
             case ERROR:
-                return MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, 0xFFF2B8B5);
+                return ContextCompat.getColor(this, R.color.log_error);
             case WARN:
-                return MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiary, 0xFFFFD566);
+                return ContextCompat.getColor(this, R.color.log_warn);
             case SUCCESS:
                 return ContextCompat.getColor(this, R.color.log_success);
             case KERNEL:
-                return MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, 0xFF92CCFF);
+                return ContextCompat.getColor(this, R.color.log_accent);
             case VERBOSE:
             case INFO:
             default:
-                return MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, 0xFFC3C6CF);
+                return ContextCompat.getColor(this, R.color.log_info);
         }
     }
 
@@ -210,8 +210,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int lineCount = 0;
 
-        int metaColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline, Color.GRAY);
-        int textColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface, Color.WHITE);
+        // Dedicated console colors: completely unaffected by AMOLED mode
+        int metaColor = ContextCompat.getColor(this, R.color.log_timestamp);
+        int textColor = ContextCompat.getColor(this, R.color.log_ink);
 
         for (LogEntry entry : mLogEntries) {
             if (!matchesFilter(entry, mCurrentFilter)) continue;
@@ -243,21 +244,30 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
 
         binding.outputView.setText(ssb);
+        if (binding.outputViewFullscreen != null) {
+            binding.outputViewFullscreen.setText(ssb);
+        }
 
         // Incremental line number gutter: 01, 02, 03...
-        if (lineCount == 0) {
-            binding.gutterView.setText("01");
-        } else {
+        String gutterText = "01";
+        if (lineCount > 0) {
             StringBuilder gutter = new StringBuilder();
             for (int i = 1; i <= lineCount; i++) {
                 gutter.append(String.format(Locale.US, "%02d\n", i));
             }
-            binding.gutterView.setText(gutter.toString().trim());
+            gutterText = gutter.toString().trim();
+        }
+        binding.gutterView.setText(gutterText);
+        if (binding.gutterViewFullscreen != null) {
+            binding.gutterViewFullscreen.setText(gutterText);
         }
 
         // Auto-scroll lock behavior
         if (!mAutoScrollLocked) {
             binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+            if (binding.outputScrollFullscreen != null) {
+                binding.outputScrollFullscreen.post(() -> binding.outputScrollFullscreen.fullScroll(View.FOCUS_DOWN));
+            }
         }
     }
 
@@ -308,7 +318,21 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             binding.toolbar.setBackgroundColor(Color.BLACK);
             getWindow().getDecorView().setBackgroundColor(Color.BLACK);
             binding.cardLogs.setCardBackgroundColor(Color.BLACK);
+            binding.fullscreenLogLayout.setBackgroundColor(Color.BLACK);
         }
+
+        // Handle Back press: exit fullscreen log if active
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.fullscreenLogLayout.getVisibility() == View.VISIBLE) {
+                    binding.fullscreenLogLayout.setVisibility(View.GONE);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
 
         // Configure theme toggle button on top right next to label
         binding.btnThemeToggle.setIconResource(isNight ? R.drawable.ic_dark_mode_24 : R.drawable.ic_light_mode_24);
@@ -390,24 +414,27 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             updateNavTabScroll(cur, 0f);
         });
 
-        // Auto-Scroll Lock toggle button
-        binding.btnToggleScrollLock.setOnClickListener(v -> {
-            mAutoScrollLocked = !mAutoScrollLocked;
-            int primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, Color.BLUE);
-            int tertiaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiary, Color.YELLOW);
-            if (mAutoScrollLocked) {
-                binding.btnToggleScrollLock.setImageResource(R.drawable.ic_lock_24);
-                binding.btnToggleScrollLock.setColorFilter(tertiaryColor);
-                Snackbar.make(binding.getRoot(), "Auto-scroll paused (locked)", Snackbar.LENGTH_SHORT).show();
-            } else {
-                binding.btnToggleScrollLock.setImageResource(R.drawable.ic_vertical_align_bottom_24);
-                binding.btnToggleScrollLock.setColorFilter(primaryColor);
-                Snackbar.make(binding.getRoot(), "Auto-scroll resumed", Snackbar.LENGTH_SHORT).show();
+        // Fullscreen Log Screen Toggle Button (Separated from inline action buttons)
+        binding.btnFullscreenLog.setOnClickListener(v -> {
+            binding.fullscreenLogLayout.setVisibility(View.VISIBLE);
+            renderLogs();
+            if (!mAutoScrollLocked && binding.outputScrollFullscreen != null) {
+                binding.outputScrollFullscreen.post(() -> binding.outputScrollFullscreen.fullScroll(View.FOCUS_DOWN));
+            }
+        });
+
+        binding.btnExitFullscreenLog.setOnClickListener(v -> {
+            binding.fullscreenLogLayout.setVisibility(View.GONE);
+            if (!mAutoScrollLocked && binding.outputScroll != null) {
                 binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
             }
         });
 
-        // M3 FilterChip Row (All | Errors Only | Kernel Output | Verbose)
+        // Auto-Scroll Lock toggle buttons (inline and fullscreen synchronized)
+        binding.btnToggleScrollLock.setOnClickListener(v -> toggleScrollLock());
+        binding.btnToggleScrollLockFullscreen.setOnClickListener(v -> toggleScrollLock());
+
+        // M3 FilterChip Rows (inline and fullscreen synchronized)
         binding.logFilterGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int id = checkedIds.get(0);
@@ -420,14 +447,35 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             } else {
                 mCurrentFilter = FILTER_ALL;
             }
+            syncFilterChips(mCurrentFilter);
+            renderLogs();
+        });
+
+        binding.logFilterGroupFullscreen.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            if (id == R.id.chipFilterErrorsFullscreen) {
+                mCurrentFilter = FILTER_ERRORS;
+            } else if (id == R.id.chipFilterKernelFullscreen) {
+                mCurrentFilter = FILTER_KERNEL;
+            } else if (id == R.id.chipFilterVerboseFullscreen) {
+                mCurrentFilter = FILTER_VERBOSE;
+            } else {
+                mCurrentFilter = FILTER_ALL;
+            }
+            syncFilterChips(mCurrentFilter);
             renderLogs();
         });
 
         // Run log action buttons (Copy, Share, Save as file, Clear with undo)
         binding.btnCopyLogs.setOnClickListener(v -> copyLogsToClipboard());
+        binding.btnCopyLogsFullscreen.setOnClickListener(v -> copyLogsToClipboard());
         binding.btnShareLogs.setOnClickListener(v -> shareLogs());
+        binding.btnShareLogsFullscreen.setOnClickListener(v -> shareLogs());
         binding.btnSaveLogs.setOnClickListener(v -> saveLogsAsFile());
+        binding.btnSaveLogsFullscreen.setOnClickListener(v -> saveLogsAsFile());
         binding.btnClearLogs.setOnClickListener(v -> clearLogs());
+        binding.btnClearLogsFullscreen.setOnClickListener(v -> clearLogs());
 
         // Initial default log line
         appendLogLine("Ready · Review detected KMI and launch root");
@@ -448,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         binding.btnRun.setOnClickListener(v -> {
             binding.btnRun.setEnabled(false);
             mLogEntries.clear();
-            appendLogLine("Starting DirtyFrag Android Root session...");
+            appendLogLine("Starting KittyFrag session...");
             mExec.execute(this::runExploit);
         });
     }
@@ -546,7 +594,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm != null) {
-            cm.setPrimaryClip(ClipData.newPlainText("DirtyFrag Run Log", text));
+            cm.setPrimaryClip(ClipData.newPlainText("KittyFrag Run Log", text));
             Snackbar.make(binding.getRoot(), "Formatted log copied to clipboard", Snackbar.LENGTH_SHORT).show();
         }
     }
@@ -559,7 +607,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "DirtyFrag Run Log");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "KittyFrag Run Log");
         shareIntent.putExtra(Intent.EXTRA_TEXT, text.toString());
         startActivity(Intent.createChooser(shareIntent, "Share Run Log"));
     }
@@ -1340,6 +1388,78 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
     }
 
+    private void toggleScrollLock() {
+        mAutoScrollLocked = !mAutoScrollLocked;
+        int primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary, Color.BLUE);
+        int tertiaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiary, Color.YELLOW);
+        int iconRes = mAutoScrollLocked ? R.drawable.ic_lock_24 : R.drawable.ic_vertical_align_bottom_24;
+        int iconColor = mAutoScrollLocked ? tertiaryColor : primaryColor;
+
+        binding.btnToggleScrollLock.setImageResource(iconRes);
+        binding.btnToggleScrollLock.setColorFilter(iconColor);
+        if (binding.btnToggleScrollLockFullscreen != null) {
+            binding.btnToggleScrollLockFullscreen.setImageResource(iconRes);
+            binding.btnToggleScrollLockFullscreen.setColorFilter(iconColor);
+        }
+
+        if (mAutoScrollLocked) {
+            Snackbar.make(binding.getRoot(), "Auto-scroll paused (locked)", Snackbar.LENGTH_SHORT).show();
+        } else {
+            Snackbar.make(binding.getRoot(), "Auto-scroll resumed", Snackbar.LENGTH_SHORT).show();
+            binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+            if (binding.outputScrollFullscreen != null) {
+                binding.outputScrollFullscreen.post(() -> binding.outputScrollFullscreen.fullScroll(View.FOCUS_DOWN));
+            }
+        }
+    }
+
+    private void syncFilterChips(int filter) {
+        int inlineId = R.id.chipFilterAll;
+        int fsId = R.id.chipFilterAllFullscreen;
+        if (filter == FILTER_ERRORS) {
+            inlineId = R.id.chipFilterErrors;
+            fsId = R.id.chipFilterErrorsFullscreen;
+        } else if (filter == FILTER_KERNEL) {
+            inlineId = R.id.chipFilterKernel;
+            fsId = R.id.chipFilterKernelFullscreen;
+        } else if (filter == FILTER_VERBOSE) {
+            inlineId = R.id.chipFilterVerbose;
+            fsId = R.id.chipFilterVerboseFullscreen;
+        }
+        if (binding.logFilterGroup.getCheckedChipId() != inlineId) {
+            binding.logFilterGroup.check(inlineId);
+        }
+        if (binding.logFilterGroupFullscreen != null && binding.logFilterGroupFullscreen.getCheckedChipId() != fsId) {
+            binding.logFilterGroupFullscreen.check(fsId);
+        }
+    }
+
+    private void updateStatusBanner(boolean inProgress, int iconRes, int iconColor, String text, String duration) {
+        binding.statusProgress.setVisibility(inProgress ? View.VISIBLE : View.GONE);
+        binding.statusIcon.setImageResource(iconRes);
+        binding.statusIcon.setColorFilter(iconColor);
+        binding.statusText.setText(text);
+        if (duration != null && !duration.isEmpty()) {
+            binding.statusDuration.setVisibility(View.VISIBLE);
+            binding.statusDuration.setText(duration);
+        } else {
+            binding.statusDuration.setVisibility(View.GONE);
+        }
+
+        if (binding.statusProgressFullscreen != null) {
+            binding.statusProgressFullscreen.setVisibility(inProgress ? View.VISIBLE : View.GONE);
+            binding.statusIconFullscreen.setImageResource(iconRes);
+            binding.statusIconFullscreen.setColorFilter(iconColor);
+            binding.statusTextFullscreen.setText(text);
+            if (duration != null && !duration.isEmpty()) {
+                binding.statusDurationFullscreen.setVisibility(View.VISIBLE);
+                binding.statusDurationFullscreen.setText(duration);
+            } else {
+                binding.statusDurationFullscreen.setVisibility(View.GONE);
+            }
+        }
+    }
+
     private File appDataDir() {
         return createDeviceProtectedStorageContext().getFilesDir().getParentFile();
     }
@@ -1350,13 +1470,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         int successColor = ContextCompat.getColor(this, R.color.log_success);
         int errorColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, Color.RED);
 
-        mMain.post(() -> {
-            binding.statusProgress.setVisibility(View.VISIBLE);
-            binding.statusIcon.setImageResource(R.drawable.ic_settings_24);
-            binding.statusIcon.setColorFilter(primaryColor);
-            binding.statusText.setText("Executing payload...");
-            binding.statusDuration.setVisibility(View.GONE);
-        });
+        mMain.post(() -> updateStatusBanner(true, R.drawable.ic_settings_24, primaryColor, "Executing payload...", null));
 
         try {
             int rc = ExploitRunner.run(this, this);
@@ -1365,36 +1479,22 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
             if (rc == 0) {
                 mMain.post(() -> {
-                    binding.statusProgress.setVisibility(View.GONE);
-                    binding.statusIcon.setImageResource(R.drawable.ic_check_circle_24);
-                    binding.statusIcon.setColorFilter(successColor);
-                    binding.statusText.setText("Process exited with code 0 (Completed in " + durStr + ")");
-                    binding.statusDuration.setVisibility(View.VISIBLE);
-                    binding.statusDuration.setText(durStr);
-                    Toast.makeText(this, "DirtyFrag Android Root: SUCCESS", Toast.LENGTH_LONG).show();
+                    updateStatusBanner(false, R.drawable.ic_check_circle_24, successColor,
+                            "Process exited with code 0 (Completed in " + durStr + ")", durStr);
+                    Toast.makeText(this, "KittyFrag: SUCCESS", Toast.LENGTH_LONG).show();
                 });
             } else {
                 mMain.post(() -> {
-                    binding.statusProgress.setVisibility(View.GONE);
-                    binding.statusIcon.setImageResource(R.drawable.ic_error_outline_24);
-                    binding.statusIcon.setColorFilter(errorColor);
-                    binding.statusText.setText("Process terminated abruptly (Code " + rc + ")");
-                    binding.statusDuration.setVisibility(View.VISIBLE);
-                    binding.statusDuration.setText(durStr);
+                    updateStatusBanner(false, R.drawable.ic_error_outline_24, errorColor,
+                            "Process terminated abruptly (Code " + rc + ")", durStr);
                     Toast.makeText(this, "FAILED: code " + rc, Toast.LENGTH_LONG).show();
                 });
             }
         } catch (Exception e) {
             Log.e(TAG, "exploit exception", e);
             report("exception: " + e + "\n");
-            mMain.post(() -> {
-                binding.statusProgress.setVisibility(View.GONE);
-                binding.statusIcon.setImageResource(R.drawable.ic_error_outline_24);
-                binding.statusIcon.setColorFilter(errorColor);
-                binding.statusText.setText("Process terminated abruptly (Code 1)");
-                binding.statusDuration.setVisibility(View.VISIBLE);
-                binding.statusDuration.setText("Failed");
-            });
+            mMain.post(() -> updateStatusBanner(false, R.drawable.ic_error_outline_24, errorColor,
+                    "Process terminated abruptly (Code 1)", "Failed"));
         } finally {
             mMain.post(this::updateRunAvailability);
         }

@@ -26,19 +26,35 @@ function handleRequest(req, res) {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
     // Download APK routes
-    if (url.pathname === '/download/dirtyfrag.apk' || url.pathname === '/download/app-debug.apk' || url.pathname === '/download') {
+    if (url.pathname === '/download/dirtyfrag.apk' || url.pathname === '/download/kittyfrag.apk' || url.pathname === '/download/app-debug.apk' || url.pathname === '/download') {
         const target = fs.existsSync(DIRTYFRAG_APK_PATH) ? DIRTYFRAG_APK_PATH : APK_PATH;
         if (fs.existsSync(target)) {
             const stat = fs.statSync(target);
             res.writeHead(200, {
                 'Content-Type': 'application/vnd.android.package-archive',
                 'Content-Length': stat.size,
-                'Content-Disposition': 'attachment; filename="dirtyfrag.apk"'
+                'Content-Disposition': 'attachment; filename="kittyfrag.apk"'
             });
             return fs.createReadStream(target).pipe(res);
         }
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         return res.end('APK not found. Please build the project first.');
+    }
+
+    // Icon routes
+    if (url.pathname === '/kittyfrag_icon.png' || url.pathname === '/favicon.ico') {
+        const iconPath = path.join(__dirname, 'kittyfrag_icon.png');
+        if (fs.existsSync(iconPath)) {
+            res.writeHead(200, { 'Content-Type': 'image/png' });
+            return fs.createReadStream(iconPath).pipe(res);
+        }
+    }
+    if (url.pathname === '/kittyfrag_icon.svg') {
+        const svgPath = path.join(__dirname, 'kittyfrag_icon.svg');
+        if (fs.existsSync(svgPath)) {
+            res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+            return fs.createReadStream(svgPath).pipe(res);
+        }
     }
 
     // Status API route
@@ -56,7 +72,8 @@ function handleRequest(req, res) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DirtyFrag Android Root</title>
+  <title>KittyFrag</title>
+  <link rel="icon" type="image/png" href="/kittyfrag_icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -70,6 +87,10 @@ function handleRequest(req, res) {
       --surface-terminal: #0D0E11;
       --outline: #8d9199;
       --outline-variant: #43474e;
+      --log-gutter: #8d9199;
+      --log-time: #8d9199;
+      --log-ink: #e6edf3;
+      --log-info: #c3c6cf;
       --primary: #92ccff;
       --on-primary: #003353;
       --secondary: #b8c8da;
@@ -94,6 +115,10 @@ function handleRequest(req, res) {
       --surface-terminal: #eef2f6;
       --outline: #73777f;
       --outline-variant: #c4c7d0;
+      --log-gutter: #73777f;
+      --log-time: #73777f;
+      --log-ink: #1a1c1e;
+      --log-info: #43474e;
       --primary: #00639b;
       --on-primary: #ffffff;
       --secondary: #51606f;
@@ -107,7 +132,7 @@ function handleRequest(req, res) {
       --color-error: #ba1a1a;
     }
 
-    /* AMOLED Theme overrides (Pure pitch black #000000 with elevated #0D0E11 canvas & Material You accents) */
+    /* AMOLED Theme overrides (Pure pitch black #000000 with dedicated log colors immune to OLED outline) */
     [data-theme="amoled"] {
       --bg: #000000;
       --surface-container-lowest: #000000;
@@ -117,6 +142,11 @@ function handleRequest(req, res) {
       --surface-terminal: #0D0E11;
       --outline: #33373e;
       --outline-variant: #1c2026;
+      /* Text logs colors are unaffected by AMOLED mode */
+      --log-gutter: #8d9199;
+      --log-time: #8d9199;
+      --log-ink: #e6edf3;
+      --log-info: #c3c6cf;
       --primary: #92ccff;
       --on-primary: #003353;
       --secondary: #b8c8da;
@@ -453,7 +483,7 @@ function handleRequest(req, res) {
       font-family: 'Roboto Mono', monospace;
       font-size: 12px;
       line-height: 16px;
-      color: var(--ink-terminal);
+      color: var(--log-ink);
       user-select: text;
       display: flex;
       gap: 8px;
@@ -463,8 +493,8 @@ function handleRequest(req, res) {
       width: 24px;
       flex-shrink: 0;
       text-align: right;
-      color: var(--outline);
-      opacity: 0.6;
+      color: var(--log-gutter);
+      opacity: 0.85;
       line-height: 16px;
       font-size: 12px;
       white-space: pre;
@@ -489,20 +519,42 @@ function handleRequest(req, res) {
       white-space: pre;
     }
     .log-time {
-      color: var(--outline);
-      opacity: 0.75;
+      color: var(--log-time);
+      opacity: 0.85;
     }
     .log-badge {
       display: inline-block;
       font-weight: 600;
     }
-    .log-badge.info { color: var(--on-surface-variant); }
-    .log-badge.verb { color: var(--on-surface-variant); }
+    .log-badge.info { color: var(--log-info); }
+    .log-badge.verb { color: var(--log-info); }
     .log-badge.succ { color: var(--color-success); font-weight: 700; }
     .log-badge.kern { color: var(--primary); font-weight: 700; }
     .log-badge.warn { color: var(--color-warn); font-weight: 700; }
     .log-badge.error { color: var(--color-error); font-weight: 700; }
-    .log-msg { color: var(--on-surface); }
+    .log-msg { color: var(--log-ink); }
+
+    /* Expanded / Fullscreen Log Overlay */
+    .fullscreen-log-overlay {
+      position: absolute;
+      top: 38px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      z-index: 45;
+      display: none;
+      flex-direction: column;
+      padding: 10px 18px 18px;
+      animation: fsSlideUp 0.22s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+    .fullscreen-log-overlay.active {
+      display: flex;
+    }
+    @keyframes fsSlideUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
 
     /* Settings inputs */
     .field-card {
@@ -862,9 +914,9 @@ function handleRequest(req, res) {
 <body>
 
   <div class="top-badge">
-    <div class="dot"></div>
-    <span>DirtyFrag MTK · Android Build Active</span>
-    <a href="/download/dirtyfrag.apk" class="dl-btn">
+    <img src="/kittyfrag_icon.png" width="22" height="22" style="border-radius:6px; flex-shrink:0;" alt="KittyFrag">
+    <span>KittyFrag · Android Build Active</span>
+    <a href="/download/kittyfrag.apk" class="dl-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
       Download APK (${apk.sizeMb} MB)
     </a>
@@ -880,11 +932,14 @@ function handleRequest(req, res) {
       </div>
     </div>
 
-    <!-- App Header with M3 Theme Toggle -->
+    <!-- App Header with KittyFrag Icon and M3 Theme Toggle -->
     <div class="app-bar">
-      <div class="app-title-group">
-        <div class="app-title">DirtyFrag Android Root</div>
-        <div class="app-subtitle">Experimental Android root</div>
+      <div class="app-title-group" style="display:flex; flex-direction:row; align-items:center; gap:12px;">
+        <img src="/kittyfrag_icon.png" width="44" height="44" style="border-radius:12px; border:1px solid #2B314B; box-shadow:0 4px 12px rgba(0,0,0,0.5);" alt="KittyFrag">
+        <div style="display:flex; flex-direction:column;">
+          <div class="app-title">KittyFrag</div>
+          <div class="app-subtitle">Experimental Android root</div>
+        </div>
       </div>
       <button class="theme-toggle-btn" id="btnThemeToggle" title="Theme & Appearance">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -915,31 +970,40 @@ KMI: android16-6.12</div>
         </div>
 
         <div class="card">
-          <!-- Log Header with Material 3 Action Box -->
+          <!-- Log Header with Material 3 Action Box and Separated Fullscreen Button -->
           <div class="log-header">
             <div class="card-label" style="margin-bottom:0">Run Log</div>
-            <div class="action-box">
-              <button class="icon-action-btn" id="btnToggleScrollLock" title="Toggle auto-scroll lock">
-                <svg id="scrollLockIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>
-                </svg>
-              </button>
-              <div class="action-divider"></div>
-              <button class="icon-action-btn" id="btnCopyLogs" title="Copy log">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-              </button>
-              <div class="action-divider"></div>
-              <button class="icon-action-btn" id="btnShareLogs" title="Share log">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
-              </button>
-              <div class="action-divider"></div>
-              <button class="icon-action-btn" id="btnSaveLogs" title="Save log as file">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-              </button>
-              <div class="action-divider"></div>
-              <button class="icon-action-btn" id="btnClearLogs" title="Clear log">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
-              </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="action-box">
+                <button class="icon-action-btn" id="btnToggleScrollLock" title="Toggle auto-scroll lock">
+                  <svg id="scrollLockIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>
+                  </svg>
+                </button>
+                <div class="action-divider"></div>
+                <button class="icon-action-btn" id="btnCopyLogs" title="Copy log">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+                <div class="action-divider"></div>
+                <button class="icon-action-btn" id="btnShareLogs" title="Share log">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+                </button>
+                <div class="action-divider"></div>
+                <button class="icon-action-btn" id="btnSaveLogs" title="Save log as file">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                </button>
+                <div class="action-divider"></div>
+                <button class="icon-action-btn" id="btnClearLogs" title="Clear log">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
+                </button>
+              </div>
+
+              <!-- Separated Fullscreen Button (Distinct container so it doesn't confuse users) -->
+              <div class="action-box">
+                <button class="icon-action-btn" id="btnFullscreenLog" title="Fullscreen log screen" style="color:var(--primary);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1021,6 +1085,71 @@ KMI: android16-6.12</div>
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
           <span class="nav-tab-label">Settings</span>
         </div>
+      </div>
+    <!-- EXPANDED / FULLSCREEN LOG OVERLAY -->
+    <div class="fullscreen-log-overlay" id="fullscreenLogOverlay">
+      <!-- Fullscreen Header with Title, Action Box, and Separated Exit Button -->
+      <div class="log-header" style="padding-top:4px; margin-bottom:8px;">
+        <div class="card-label" style="font-size:13px; margin-bottom:0;">Expanded Run Log</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="action-box">
+            <button class="icon-action-btn" id="btnToggleScrollLockFs" title="Toggle auto-scroll lock">
+              <svg id="scrollLockIconFs" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>
+              </svg>
+            </button>
+            <div class="action-divider"></div>
+            <button class="icon-action-btn" id="btnCopyLogsFs" title="Copy log">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </button>
+            <div class="action-divider"></div>
+            <button class="icon-action-btn" id="btnShareLogsFs" title="Share log">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+            </button>
+            <div class="action-divider"></div>
+            <button class="icon-action-btn" id="btnSaveLogsFs" title="Save log as file">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            </button>
+            <div class="action-divider"></div>
+            <button class="icon-action-btn" id="btnClearLogsFs" title="Clear log">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
+            </button>
+          </div>
+
+          <!-- Separated Exit Fullscreen Button (Distinct container to avoid confusing with inline tools) -->
+          <div class="action-box">
+            <button class="icon-action-btn" id="btnExitFullscreenLog" title="Exit fullscreen" style="color:var(--primary);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- M3 FilterChip Row for Fullscreen -->
+      <div class="filter-chip-row" id="filterChipRowFs" style="padding-bottom:6px;">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="errors">Errors Only</button>
+        <button class="filter-chip" data-filter="kernel">Kernel Output</button>
+        <button class="filter-chip" data-filter="verbose">Verbose</button>
+      </div>
+
+      <!-- Real-Time Sticky Status Bar in Fullscreen -->
+      <div class="status-banner" id="statusBannerFs">
+        <div class="status-progress-bar" id="statusProgressFs"></div>
+        <div class="status-content">
+          <div class="status-icon" id="statusIconFs">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </div>
+          <span class="status-text" id="statusTextFs">Ready · Review detected KMI and launch root</span>
+          <span class="status-duration" id="statusDurationFs"></span>
+        </div>
+      </div>
+
+      <!-- Expanded Terminal Box with Gutter & Monospace Scaling -->
+      <div class="terminal-box" id="terminalContainerFs" style="flex:1; height:auto; min-height:0;">
+        <div class="terminal-gutter" id="gutterViewFs">01</div>
+        <div class="terminal-divider"></div>
+        <div class="terminal-logs" id="logBoxFs"></div>
       </div>
     </div>
 
@@ -1211,6 +1340,34 @@ KMI: android16-6.12</div>
       renderLogs();
     }
 
+    const fsOverlay = document.getElementById('fullscreenLogOverlay');
+    const btnFullscreenLog = document.getElementById('btnFullscreenLog');
+    const btnExitFullscreenLog = document.getElementById('btnExitFullscreenLog');
+    const gutterViewFs = document.getElementById('gutterViewFs');
+    const logBoxFs = document.getElementById('logBoxFs');
+    const terminalContainerFs = document.getElementById('terminalContainerFs');
+    const statusProgressFs = document.getElementById('statusProgressFs');
+    const statusIconFs = document.getElementById('statusIconFs');
+    const statusTextFs = document.getElementById('statusTextFs');
+    const statusDurationFs = document.getElementById('statusDurationFs');
+    const btnToggleScrollLockFs = document.getElementById('btnToggleScrollLockFs');
+    const scrollLockIconFs = document.getElementById('scrollLockIconFs');
+
+    btnFullscreenLog.addEventListener('click', () => {
+      fsOverlay.classList.add('active');
+      renderLogs();
+      if (!autoScrollLocked) {
+        terminalContainerFs.scrollTop = terminalContainerFs.scrollHeight;
+      }
+    });
+
+    btnExitFullscreenLog.addEventListener('click', () => {
+      fsOverlay.classList.remove('active');
+      if (!autoScrollLocked) {
+        terminalContainer.scrollTop = terminalContainer.scrollHeight;
+      }
+    });
+
     function renderLogs() {
       const filtered = logEntries.filter(e => {
         if (activeFilter === 'errors') return e.level === 'error';
@@ -1221,62 +1378,98 @@ KMI: android16-6.12</div>
 
       if (filtered.length === 0) {
         gutterView.textContent = '01';
-        logBox.innerHTML = '<span style="color:var(--on-surface-variant); opacity:0.6;">No log lines matching current filter</span>';
+        if (gutterViewFs) gutterViewFs.textContent = '01';
+        const emptyMsg = '<span style="color:var(--on-surface-variant); opacity:0.6;">No log lines matching current filter</span>';
+        logBox.innerHTML = emptyMsg;
+        if (logBoxFs) logBoxFs.innerHTML = emptyMsg;
         return;
       }
 
-      gutterView.textContent = filtered.map((_, i) => String(i + 1).padStart(2, '0')).join('\n');
-      logBox.innerHTML = filtered.map(e => '<span class="log-line"><span class="log-time">[' + e.time + ']</span>  <span class="log-badge ' + e.level + '">' + e.tag + '</span> <span class="log-msg">' + escapeHtml(e.message) + '</span></span>').join('');
+      const gutterStr = filtered.map((_, i) => String(i + 1).padStart(2, '0')).join('\n');
+      const logHtml = filtered.map(e => '<span class="log-line"><span class="log-time">[' + e.time + ']</span>  <span class="log-badge ' + e.level + '">' + e.tag + '</span> <span class="log-msg">' + escapeHtml(e.message) + '</span></span>').join('');
+
+      gutterView.textContent = gutterStr;
+      if (gutterViewFs) gutterViewFs.textContent = gutterStr;
+
+      logBox.innerHTML = logHtml;
+      if (logBoxFs) logBoxFs.innerHTML = logHtml;
 
       if (!autoScrollLocked) {
         terminalContainer.scrollTop = terminalContainer.scrollHeight;
+        if (terminalContainerFs) terminalContainerFs.scrollTop = terminalContainerFs.scrollHeight;
       }
     }
 
-    // Auto-Scroll Lock Toggle
-    btnToggleScrollLock.addEventListener('click', () => {
+    function toggleScrollLock() {
       autoScrollLocked = !autoScrollLocked;
+      const lockIconSvg = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>';
+      const unlockIconSvg = '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>';
+
       if (autoScrollLocked) {
         btnToggleScrollLock.classList.add('active-lock');
-        scrollLockIcon.innerHTML = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>';
+        scrollLockIcon.innerHTML = lockIconSvg;
+        if (btnToggleScrollLockFs) {
+          btnToggleScrollLockFs.classList.add('active-lock');
+          scrollLockIconFs.innerHTML = lockIconSvg;
+        }
         showToast('Auto-scroll paused (locked)');
       } else {
         btnToggleScrollLock.classList.remove('active-lock');
-        scrollLockIcon.innerHTML = '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>';
+        scrollLockIcon.innerHTML = unlockIconSvg;
+        if (btnToggleScrollLockFs) {
+          btnToggleScrollLockFs.classList.remove('active-lock');
+          scrollLockIconFs.innerHTML = unlockIconSvg;
+        }
         showToast('Auto-scroll resumed');
         terminalContainer.scrollTop = terminalContainer.scrollHeight;
+        if (terminalContainerFs) terminalContainerFs.scrollTop = terminalContainerFs.scrollHeight;
       }
-    });
+    }
 
-    // Filter Chips
-    document.querySelectorAll('.filter-chip').forEach(chip => {
+    // Auto-Scroll Lock Toggle listeners
+    btnToggleScrollLock.addEventListener('click', toggleScrollLock);
+    if (btnToggleScrollLockFs) {
+      btnToggleScrollLockFs.addEventListener('click', toggleScrollLock);
+    }
+
+    // Synchronize Filter Chips between inline and fullscreen
+    function applyFilter(filter) {
+      activeFilter = filter;
+      document.querySelectorAll('#filterChipRow .filter-chip, #filterChipRowFs .filter-chip').forEach(c => {
+        if (c.getAttribute('data-filter') === filter) {
+          c.classList.add('active');
+        } else {
+          c.classList.remove('active');
+        }
+      });
+      renderLogs();
+    }
+
+    document.querySelectorAll('#filterChipRow .filter-chip, #filterChipRowFs .filter-chip').forEach(chip => {
       chip.addEventListener('click', () => {
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        activeFilter = chip.getAttribute('data-filter');
-        renderLogs();
+        applyFilter(chip.getAttribute('data-filter'));
       });
     });
 
     // Run Log Action Buttons (Copy, Share, Save as file, Clear with undo)
-    document.getElementById('btnCopyLogs').addEventListener('click', () => {
+    function handleCopyLogs() {
       if (logEntries.length === 0) {
         showToast('Log is empty');
         return;
       }
       const text = logEntries.map(e => '[' + e.time + ']  ' + e.tag + ' ' + e.message).join('\n');
       navigator.clipboard.writeText(text).then(() => showToast('Formatted log copied to clipboard'));
-    });
+    }
 
-    document.getElementById('btnShareLogs').addEventListener('click', () => {
+    function handleShareLogs() {
       if (logEntries.length === 0) {
         showToast('Log is empty');
         return;
       }
       showToast('Sharing run log (plain text attachment)...');
-    });
+    }
 
-    document.getElementById('btnSaveLogs').addEventListener('click', () => {
+    function handleSaveLogs() {
       if (logEntries.length === 0) {
         showToast('Log is empty');
         return;
@@ -1288,9 +1481,9 @@ KMI: android16-6.12</div>
       a.download = 'dirtyfrag-log.txt';
       a.click();
       showToast('Saved dirtyfrag-log.txt');
-    });
+    }
 
-    document.getElementById('btnClearLogs').addEventListener('click', () => {
+    function handleClearLogs() {
       if (logEntries.length === 0) {
         showToast('Log is already empty');
         return;
@@ -1306,10 +1499,45 @@ KMI: android16-6.12</div>
           showToast('Log canvas restored');
         }
       });
-    });
+    }
+
+    document.getElementById('btnCopyLogs').addEventListener('click', handleCopyLogs);
+    document.getElementById('btnCopyLogsFs').addEventListener('click', handleCopyLogs);
+
+    document.getElementById('btnShareLogs').addEventListener('click', handleShareLogs);
+    document.getElementById('btnShareLogsFs').addEventListener('click', handleShareLogs);
+
+    document.getElementById('btnSaveLogs').addEventListener('click', handleSaveLogs);
+    document.getElementById('btnSaveLogsFs').addEventListener('click', handleSaveLogs);
+
+    document.getElementById('btnClearLogs').addEventListener('click', handleClearLogs);
+    document.getElementById('btnClearLogsFs').addEventListener('click', handleClearLogs);
 
     // Initial ready state log line
     addLogEntry('Ready · Review detected KMI and launch root');
+
+    function updateStatus(inProgress, iconSvg, iconColor, text, duration) {
+      if (inProgress) {
+        statusProgress.classList.add('active');
+        if (statusProgressFs) statusProgressFs.classList.add('active');
+      } else {
+        statusProgress.classList.remove('active');
+        if (statusProgressFs) statusProgressFs.classList.remove('active');
+      }
+      statusIcon.innerHTML = iconSvg;
+      statusIcon.style.color = iconColor;
+      if (statusIconFs) {
+        statusIconFs.innerHTML = iconSvg;
+        statusIconFs.style.color = iconColor;
+      }
+      statusText.textContent = text;
+      if (statusTextFs) statusTextFs.textContent = text;
+      statusDuration.textContent = duration || '';
+      if (statusDurationFs) statusDurationFs.textContent = duration || '';
+    }
+
+    const spinIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>';
+    const checkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
 
     // Launch Root Action with Real-Time Sticky Status Bar
     btnLaunch.addEventListener('click', () => {
@@ -1317,14 +1545,10 @@ KMI: android16-6.12</div>
       btnLaunch.textContent = 'Launching...';
       const startMs = Date.now();
 
-      statusProgress.classList.add('active');
-      statusIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>';
-      statusIcon.style.color = 'var(--primary)';
-      statusText.textContent = 'Executing payload...';
-      statusDuration.textContent = '';
+      updateStatus(true, spinIcon, 'var(--primary)', 'Executing payload...', '');
 
       logEntries = [];
-      addLogEntry('Starting DirtyFrag Android Root session...');
+      addLogEntry('Starting KittyFrag session...');
 
       const steps = [
         'Kernel version: 6.12.38-android16-5-gb575a0b6e647',
@@ -1344,12 +1568,8 @@ KMI: android16-6.12</div>
             const elapsed = ((Date.now() - startMs) / 1000).toFixed(2);
             btnLaunch.disabled = false;
             btnLaunch.textContent = 'Launch root';
-            statusProgress.classList.remove('active');
-            statusIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-            statusIcon.style.color = 'var(--color-success)';
-            statusText.textContent = 'Process exited with code 0 (Completed in ' + elapsed + 's)';
-            statusDuration.textContent = elapsed + 's';
-            showToast('DirtyFrag Android Root: SUCCESS');
+            updateStatus(false, checkIcon, 'var(--color-success)', 'Process exited with code 0 (Completed in ' + elapsed + 's)', elapsed + 's');
+            showToast('KittyFrag: SUCCESS');
           }
         }, (idx + 1) * 350);
       });
