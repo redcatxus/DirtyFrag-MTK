@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
 }
 
-val appVersionName = providers.gradleProperty("versionName").orElse("3.0-experimental")
+val appVersionName = providers.gradleProperty("versionName").orElse("3.1.0")
 
 android {
     namespace = "df.root"
@@ -10,10 +10,10 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "kitty.root"
+        applicationId = "df.root"
         minSdk = 31
         targetSdk = 36
-        versionCode = 6
+        versionCode = 7
         versionName = appVersionName.get()
 
         ndk {
