@@ -1,5 +1,8 @@
 package df.root;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -10,10 +13,14 @@ import android.os.Looper;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.color.DynamicColors;
 
@@ -76,6 +83,54 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         // does not steal the gesture.
         binding.outputScroll.setNestedScrollingEnabled(false);
 
+        // Make both screens (Home and Settings) scrollable / swipeable between one another
+        binding.viewPager.setAdapter(new PagerAdapter() {
+            @Override
+            public int getCount() {
+                return 2;
+            }
+
+            @Override
+            public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+                return view == object;
+            }
+
+            @NonNull
+            @Override
+            public Object instantiateItem(@NonNull ViewGroup container, int position) {
+                return position == 0 ? binding.homeScroll : binding.settingsScroll;
+            }
+
+            @Override
+            public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+                // Persistent views: do not destroy or remove
+            }
+        });
+
+        // Sync ViewPager swipe gestures with MDE3 floating bottom navigation
+        binding.viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                int expectedId = (position == 0) ? R.id.nav_home : R.id.nav_settings;
+                if (binding.bottomNavigation.getSelectedItemId() != expectedId) {
+                    binding.bottomNavigation.setSelectedItemId(expectedId);
+                }
+            }
+        });
+
+        // Sync bottom navigation tab clicks to scroll the ViewPager
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            int targetPage = (item.getItemId() == R.id.nav_settings) ? 1 : 0;
+            if (binding.viewPager.getCurrentItem() != targetPage) {
+                binding.viewPager.setCurrentItem(targetPage, true);
+            }
+            return true;
+        });
+
+        // Run log action buttons (Copy and Clear)
+        binding.btnCopyLogs.setOnClickListener(v -> copyLogsToClipboard());
+        binding.btnClearLogs.setOnClickListener(v -> clearLogs());
+
         updateDeviceProfile();
         updateKsudMode();
         updateKoMode();
@@ -89,25 +144,30 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         binding.koSelection.setOnItemClickListener((parent, view, position, id) ->
                 onKoSelection(position));
         binding.githubLink.setOnClickListener(v -> openGithub());
-        binding.bottomNavigation.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_settings) {
-                binding.homeScroll.setVisibility(View.GONE);
-                binding.settingsScroll.setVisibility(View.VISIBLE);
-                return true;
-            }
-            if (item.getItemId() == R.id.nav_home) {
-                binding.settingsScroll.setVisibility(View.GONE);
-                binding.homeScroll.setVisibility(View.VISIBLE);
-                return true;
-            }
-            return false;
-        });
 
         binding.btnRun.setOnClickListener(v -> {
             binding.btnRun.setEnabled(false);
             binding.outputView.setText("");
             mExec.execute(this::runExploit);
         });
+    }
+
+    private void copyLogsToClipboard() {
+        CharSequence text = binding.outputView.getText();
+        if (text == null || text.length() == 0) {
+            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("DirtyFrag Run Log", text));
+            Toast.makeText(this, "Log copied to clipboard", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void clearLogs() {
+        binding.outputView.setText("");
+        Toast.makeText(this, "Log cleared", Toast.LENGTH_SHORT).show();
     }
 
     private void selectPayload(int requestCode) {

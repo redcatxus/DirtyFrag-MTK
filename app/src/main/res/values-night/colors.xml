@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-        Dark mode fallback palette.
-        On Android 12+ these are overridden by Material You dynamic colors for the M3 tokens,
-        but they're still used by custom semantic colors (log, nav glass, etc.)
-        and as fallback on devices without wallpaper-derived colors.
-    -->
+    <!-- Material 3 Dark baseline tokens (overridden by Material You on Android 12+) -->
+    <color name="primary">#92CCFF</color>
+    <color name="on_primary">#003353</color>
+    <color name="primary_container">#004B76</color>
+    <color name="on_primary_container">#CDE5FF</color>
 
-    <!-- Brand / accent -->
-    <color name="primary">#FFB59A</color>      <!-- warm amber on dark, M3 tone 80 -->
-    <color name="on_primary">#5C1A00</color>
-    <color name="secondary">#E8B49A</color>
+    <color name="secondary">#B8C8DA</color>
+    <color name="on_secondary">#233240</color>
+    <color name="secondary_container">#394857</color>
+    <color name="on_secondary_container">#D4E4F6</color>
 
-    <!-- Surfaces -->
-    <color name="page_background">#191210</color>  <!-- very dark warm brown -->
-    <color name="card_background">#261F1C</color>
-    <color name="card_outline">#4A3B33</color>
+    <color name="surface">#111418</color>
+    <color name="surface_container_lowest">#0C0E12</color>
+    <color name="surface_container_low">#191C20</color>
+    <color name="surface_container">#1D2024</color>
+    <color name="surface_container_high">#272A2F</color>
+    <color name="surface_container_highest">#32353A</color>
 
-    <!-- Text -->
-    <color name="ink">#F0E0D6</color>              <!-- warm off-white -->
-    <color name="secondary_ink">#B09080</color>
+    <color name="on_surface">#E1E2E8</color>
+    <color name="on_surface_variant">#C3C6CF</color>
 
-    <!-- Log terminal — keeps a warm tinted feel in dark mode -->
-    <color name="log_background">#1E1612</color>
-    <color name="log_ink">#D4B8A8</color>
+    <color name="outline">#8D9199</color>
+    <color name="outline_variant">#43474E</color>
 
-    <!-- Bottom nav -->
-    <color name="nav_icon_default">#9E8275</color>
-    <color name="nav_active_indicator">#3D2A22</color>
-    <color name="nav_ripple">#33FFB59A</color>
-    <color name="nav_glass_top">#CC261F1C</color>
-    <color name="nav_glass_bottom">#E0191210</color>
-    <color name="nav_glass_outline">#554540</color>
+    <color name="page_background">#0E1114</color>
+
+    <!-- Run log terminal -->
+    <color name="log_background">#080B10</color>
+    <color name="log_ink">#E6EDF3</color>
+    <color name="log_accent">#79C0FF</color>
+
+    <color name="nav_ripple">#2692CCFF</color>
 </resources>
