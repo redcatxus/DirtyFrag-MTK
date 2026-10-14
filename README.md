@@ -28,6 +28,8 @@ It is an independent DFRoot fork and device-port. The core DirtyFrag exploit cha
 
 Built with the help of [Codex](https://openai.com/codex/).
 
+Visual overhaul assisted by Claude and Google.
+
 ## Device support
 
 The bundled helper modules cover **8 Android KMI/kernel-version combinations**
@@ -40,7 +42,7 @@ the exploit also matter.
 
 ## Use
 
-Download the latest APK from the repository's [Releases](https://github.com/ankitrawatgit/DirtyFrag-Android-Root-Jailbreak/releases) page.
+Download the latest APK from the repository's [Releases](https://github.com/redcatxus/DirtyFrag-MTK/releases) page.
 
 ### Root manager downloads
 
