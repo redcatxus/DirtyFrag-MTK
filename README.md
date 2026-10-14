@@ -23,8 +23,7 @@ I touched up the app to make use of Dynamic Theming and Dark Mode.
 
 It is an independent DFRoot fork and device-port. The core DirtyFrag exploit chain is inherited and credited to DFRoot, LSPromise, DFReroot, and DirtyInit. This project adds a manual standalone flow, manager-neutral ksud loading, KMI/module selection, vendor-target fallbacks, diagnostics, and a redesigned Android interface.
 
-[![Views](https://hits.sh/github.com/ankitrawatgit/DirtyFrag-Android-Root-Jailbreak.svg?label=views&color=3A56D4)](https://github.com/redcatxus/DirtyFrag-MTK)
-
+[![Hits](https://hits.sh/github.com/redcatxus/DirtyFrag-MTK.svg?style=for-the-badge&label=Views&color=685587&labelColor=004EE6)](https://hits.sh/github.com/redcatxus/DirtyFrag-MTK/)
 
 Built with the help of [Codex](https://openai.com/codex/).
 
