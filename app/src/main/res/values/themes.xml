@@ -70,4 +70,9 @@
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
+
+    <style name="ShapeAppearance.KittyFrag.Squircle" parent="">
+        <item name="cornerSize">10dp</item>
+        <item name="cornerFamily">rounded</item>
+    </style>
 </resources>

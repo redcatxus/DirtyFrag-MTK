@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.widget.ArrayAdapter;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -40,7 +39,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import androidx.core.content.ContextCompat;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -271,6 +269,99 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
     }
 
+    private Runnable mToastDismissRunnable = null;
+
+    public void showToast(int iconRes, String message) {
+        int bgTone = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondaryContainer, Color.DKGRAY);
+        int fgTone = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.WHITE);
+        showCustomToast(iconRes, bgTone, fgTone, message, null, null);
+    }
+
+    public void showSuccessToast(String message) {
+        int bgTone = ContextCompat.getColor(this, R.color.log_success);
+        showCustomToast(R.drawable.ic_check_circle_24, bgTone, Color.BLACK, message, null, null);
+    }
+
+    public void showErrorToast(String message) {
+        int errorTone = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorError, Color.RED);
+        int onErrorTone = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnError, Color.WHITE);
+        showCustomToast(R.drawable.ic_error_outline_24, errorTone, onErrorTone, message, null, null);
+    }
+
+    public void showWarningToast(String message) {
+        int warnTone = ContextCompat.getColor(this, R.color.log_warn);
+        showCustomToast(R.drawable.ic_error_outline_24, warnTone, Color.BLACK, message, null, null);
+    }
+
+    public void showUndoToast(int iconRes, String message, Runnable onUndo) {
+        int bgTone = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondaryContainer, Color.DKGRAY);
+        int fgTone = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSecondaryContainer, Color.WHITE);
+        showCustomToast(iconRes, bgTone, fgTone, message, "Undo", onUndo);
+    }
+
+    private void showCustomToast(int iconRes, int iconBgColor, int iconFgColor,
+                                 String message, String actionText, Runnable onAction) {
+        mMain.post(() -> {
+            if (binding == null || binding.customToastCard == null) return;
+
+            if (mToastDismissRunnable != null) {
+                mMain.removeCallbacks(mToastDismissRunnable);
+                mToastDismissRunnable = null;
+            }
+
+            binding.toastIcon.setImageResource(iconRes);
+            binding.toastIcon.setColorFilter(iconFgColor);
+            binding.toastIconContainer.setCardBackgroundColor(iconBgColor);
+            binding.toastMessage.setText(message);
+
+            if (actionText != null && onAction != null) {
+                binding.toastAction.setText(actionText);
+                binding.toastAction.setVisibility(View.VISIBLE);
+                binding.toastAction.setOnClickListener(v -> {
+                    dismissCustomToast();
+                    onAction.run();
+                });
+            } else {
+                binding.toastAction.setVisibility(View.GONE);
+                binding.toastAction.setOnClickListener(null);
+            }
+
+            binding.customToastCard.setVisibility(View.VISIBLE);
+            binding.customToastCard.animate().cancel();
+            binding.customToastCard.setTranslationY(28f);
+            binding.customToastCard.setAlpha(0f);
+            binding.customToastCard.animate()
+                    .translationY(0f)
+                    .alpha(1f)
+                    .setDuration(240)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+
+            mToastDismissRunnable = this::dismissCustomToast;
+            mMain.postDelayed(mToastDismissRunnable, 3200);
+        });
+    }
+
+    private void dismissCustomToast() {
+        if (binding == null || binding.customToastCard == null) return;
+        if (mToastDismissRunnable != null) {
+            mMain.removeCallbacks(mToastDismissRunnable);
+            mToastDismissRunnable = null;
+        }
+        binding.customToastCard.animate().cancel();
+        binding.customToastCard.animate()
+                .translationY(24f)
+                .alpha(0f)
+                .setDuration(180)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                .withEndAction(() -> {
+                    if (binding != null && binding.customToastCard != null) {
+                        binding.customToastCard.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+    }
+
     @Override
     public void report(String msg) {
         Log.i(TAG, msg.trim());
@@ -311,6 +402,13 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+
+        if (binding.customToastCard != null) {
+            binding.customToastCard.setOnClickListener(v -> dismissCustomToast());
+        }
 
         if (isNight && amoled) {
             binding.getRoot().setBackgroundColor(Color.BLACK);
@@ -589,20 +687,20 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     private void copyLogsToClipboard() {
         CharSequence text = binding.outputView.getText();
         if (text == null || text.length() == 0) {
-            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_clear_24, "Log is empty");
             return;
         }
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm != null) {
             cm.setPrimaryClip(ClipData.newPlainText("KittyFrag Run Log", text));
-            Snackbar.make(binding.getRoot(), "Formatted log copied to clipboard", Snackbar.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_copy_24, "Formatted log copied to clipboard");
         }
     }
 
     private void shareLogs() {
         CharSequence text = binding.outputView.getText();
         if (text == null || text.length() == 0) {
-            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_clear_24, "Log is empty");
             return;
         }
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -610,12 +708,13 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, "KittyFrag Run Log");
         shareIntent.putExtra(Intent.EXTRA_TEXT, text.toString());
         startActivity(Intent.createChooser(shareIntent, "Share Run Log"));
+        showToast(R.drawable.ic_share_24, "Sharing run log...");
     }
 
     private void saveLogsAsFile() {
         CharSequence text = binding.outputView.getText();
         if (text == null || text.length() == 0) {
-            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_clear_24, "Log is empty");
             return;
         }
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -633,9 +732,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                 try (FileOutputStream fos = new FileOutputStream(logFile)) {
                     fos.write(text.toString().getBytes(StandardCharsets.UTF_8));
                 }
-                Toast.makeText(this, "Saved to " + logFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                showSuccessToast("Saved to " + logFile.getName());
             } catch (Exception ex) {
-                Toast.makeText(this, "Could not save log file", Toast.LENGTH_SHORT).show();
+                showErrorToast("Could not save log file");
             }
         }
     }
@@ -646,30 +745,29 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         try (OutputStream os = getContentResolver().openOutputStream(uri)) {
             if (os != null) {
                 os.write(content.getBytes(StandardCharsets.UTF_8));
-                Toast.makeText(this, "Log saved successfully", Toast.LENGTH_SHORT).show();
+                showSuccessToast("Log saved successfully");
             }
         } catch (Exception e) {
             Log.e(TAG, "failed to save log", e);
-            Toast.makeText(this, "Failed to save log: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            showErrorToast("Failed to save log: " + e.getMessage());
         }
     }
 
     private void clearLogs() {
         if (mLogEntries.isEmpty()) {
-            Toast.makeText(this, "Log is empty", Toast.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_clear_24, "Log is empty");
             return;
         }
         mClearedLogEntries.clear();
         mClearedLogEntries.addAll(mLogEntries);
         mLogEntries.clear();
         renderLogs();
-        Snackbar.make(binding.getRoot(), "Log canvas cleared", Snackbar.LENGTH_LONG)
-                .setAction("Undo", v -> {
-                    mLogEntries.addAll(mClearedLogEntries);
-                    mClearedLogEntries.clear();
-                    renderLogs();
-                })
-                .show();
+        showUndoToast(R.drawable.ic_clear_24, "Log canvas cleared", () -> {
+            mLogEntries.addAll(mClearedLogEntries);
+            mClearedLogEntries.clear();
+            renderLogs();
+            showSuccessToast("Log canvas restored");
+        });
     }
 
     private void selectPayload(int requestCode) {
@@ -679,7 +777,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         try {
             startActivityForResult(intent, requestCode);
         } catch (Exception e) {
-            Toast.makeText(this, "No file picker is available", Toast.LENGTH_LONG).show();
+            showErrorToast("No file picker is available");
         }
     }
 
@@ -700,7 +798,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             else importCustomKo(data.getData());
         } catch (Exception e) {
             Log.e(TAG, "payload import failed", e);
-            Toast.makeText(this, "Could not use that file", Toast.LENGTH_LONG).show();
+            showErrorToast("Could not use that file");
             report("payload import failed: " + e + "\n");
         }
     }
@@ -863,24 +961,26 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     private void useManagerKsud() {
         File customKsud = new File(appDataDir(), "ksud.custom");
         if (customKsud.exists() && !customKsud.delete()) {
-            Toast.makeText(this, "Could not remove the custom ksud file", Toast.LENGTH_LONG).show();
+            showErrorToast("Could not remove custom ksud file");
             return;
         }
         getSharedPreferences("dfroot", MODE_PRIVATE).edit().remove("custom_ksud_label").apply();
         updateKsudMode();
         report("using automatic manager ksud selection (default)\n");
+        showToast(R.drawable.ic_settings_24, "Automatic ksud selection active");
     }
 
     private void useBundledKo() {
         File customKo = ExploitRunner.customKoFile(this);
         if (customKo.exists() && !customKo.delete()) {
-            Toast.makeText(this, "Could not remove the selected module", Toast.LENGTH_LONG).show();
+            showErrorToast("Could not remove selected module");
             return;
         }
         getSharedPreferences("dfroot", MODE_PRIVATE).edit()
                 .remove("custom_ko_label").putString(PREF_SELECTED_KO, AUTO_KO).apply();
         updateKoMode();
         report("using bundled KittyFrag module selected by KMI (default)\n");
+        showToast(R.drawable.ic_settings_24, "Automatic helper module active");
     }
 
     private void onKoSelection(int position) {
@@ -890,14 +990,13 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
         String selectedKmi = position == 0 ? AUTO_KO : BUNDLED_KMIS[position - 1];
         if (!AUTO_KO.equals(selectedKmi) && !sameKernelVersion(selectedKmi, currentKmi())) {
-            Toast.makeText(this, "That module targets a different kernel version. Selection unchanged.",
-                    Toast.LENGTH_LONG).show();
+            showWarningToast("Module targets a different kernel version");
             updateKoMode();
             return;
         }
 
         if (customKo.exists() && !customKo.delete()) {
-            Toast.makeText(this, "Could not remove the selected custom module", Toast.LENGTH_LONG).show();
+            showErrorToast("Could not remove selected custom module");
             updateKoMode();
             return;
         }
@@ -908,6 +1007,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         report(actualKmi == null
                 ? "bundled module selection: no match for current kernel KMI " + currentKmiLabel() + "\n"
                 : "bundled module selection: dirtyfrag-" + actualKmi + ".ko\n");
+        showSuccessToast("Selected helper: " + (AUTO_KO.equals(selectedKmi) ? "Automatic" : "dirtyfrag-" + selectedKmi + ".ko"));
     }
 
     private void updateKsudMode() {
@@ -940,7 +1040,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         binding.vendorTargetsLayout.setError(null);
         updateVendorTargetsUi();
         report("vendor target profile saved; it will be used on the next run\n");
-        Toast.makeText(this, "Vendor target profile saved", Toast.LENGTH_SHORT).show();
+        showSuccessToast("Vendor target profile saved");
     }
 
     private void resetVendorTargets() {
@@ -949,7 +1049,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         binding.vendorTargetsLayout.setError(null);
         updateVendorTargetsUi();
         report("vendor target profile reset to defaults\n");
-        Toast.makeText(this, "Default vendor targets restored", Toast.LENGTH_SHORT).show();
+        showSuccessToast("Default vendor targets restored");
     }
 
     private void updateKoMode() {
@@ -1384,7 +1484,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/redcatxus/DirtyFrag-MTK")));
         } catch (Exception e) {
-            Toast.makeText(this, "No browser is available", Toast.LENGTH_LONG).show();
+            showErrorToast("No browser is available");
         }
     }
 
@@ -1403,9 +1503,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
 
         if (mAutoScrollLocked) {
-            Snackbar.make(binding.getRoot(), "Auto-scroll paused (locked)", Snackbar.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_lock_24, "Auto-scroll paused (locked)");
         } else {
-            Snackbar.make(binding.getRoot(), "Auto-scroll resumed", Snackbar.LENGTH_SHORT).show();
+            showToast(R.drawable.ic_vertical_align_bottom_24, "Auto-scroll resumed");
             binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
             if (binding.outputScrollFullscreen != null) {
                 binding.outputScrollFullscreen.post(() -> binding.outputScrollFullscreen.fullScroll(View.FOCUS_DOWN));
@@ -1481,20 +1581,23 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                 mMain.post(() -> {
                     updateStatusBanner(false, R.drawable.ic_check_circle_24, successColor,
                             "Process exited with code 0 (Completed in " + durStr + ")", durStr);
-                    Toast.makeText(this, "KittyFrag: SUCCESS", Toast.LENGTH_LONG).show();
+                    showSuccessToast("KittyFrag: SUCCESS");
                 });
             } else {
                 mMain.post(() -> {
                     updateStatusBanner(false, R.drawable.ic_error_outline_24, errorColor,
                             "Process terminated abruptly (Code " + rc + ")", durStr);
-                    Toast.makeText(this, "FAILED: code " + rc, Toast.LENGTH_LONG).show();
+                    showErrorToast("FAILED: code " + rc);
                 });
             }
         } catch (Exception e) {
             Log.e(TAG, "exploit exception", e);
             report("exception: " + e + "\n");
-            mMain.post(() -> updateStatusBanner(false, R.drawable.ic_error_outline_24, errorColor,
-                    "Process terminated abruptly (Code 1)", "Failed"));
+            mMain.post(() -> {
+                updateStatusBanner(false, R.drawable.ic_error_outline_24, errorColor,
+                        "Process terminated abruptly (Code 1)", "Failed");
+                showErrorToast("Exception: " + e.getMessage());
+            });
         } finally {
             mMain.post(this::updateRunAvailability);
         }

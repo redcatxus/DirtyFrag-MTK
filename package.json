@@ -1,7 +1,7 @@
 {
-  "name": "dirtyfrag-mtk",
+  "name": "kittyfrag",
   "version": "3.0.0",
-  "description": "DirtyFrag Android Root App & Web Preview",
+  "description": "KittyFrag Android Root App & Web Preview",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",

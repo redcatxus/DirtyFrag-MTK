@@ -1006,8 +1006,8 @@ function handleRequest(req, res) {
 
     <!-- App Header with KittyFrag Icon and M3 Theme Toggle -->
     <div class="app-bar">
-      <div class="app-title-group" style="display:flex; flex-direction:row; align-items:center; gap:10px;">
-        <img src="/kittyfrag_icon.png" width="30" height="30" style="border-radius:8px; border:1px solid #2B314B; box-shadow:0 2px 6px rgba(0,0,0,0.4);" alt="KittyFrag">
+      <div class="app-title-group" style="display:flex; flex-direction:row; align-items:center; gap:12px;">
+        <img src="/kittyfrag_icon.png" width="40" height="40" style="border-radius:10px; flex-shrink:0; object-fit:cover; border:1px solid var(--outline-variant); box-shadow:0 2px 8px rgba(0,0,0,0.3);" alt="KittyFrag">
         <div style="display:flex; flex-direction:column;">
           <div class="app-title">KittyFrag</div>
           <div class="app-subtitle">Experimental Android root</div>
