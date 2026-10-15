@@ -28,7 +28,7 @@
 
             <RelativeLayout
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent">
+                android:layout_height="68dp">
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/appLogo"

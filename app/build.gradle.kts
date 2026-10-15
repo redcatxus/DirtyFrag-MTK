@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
 }
 
-val appVersionName = providers.gradleProperty("versionName").orElse("3.1.1")
+val appVersionName = providers.gradleProperty("versionName").orElse("3.1.2")
 
 android {
     namespace = "df.root"
@@ -13,7 +13,7 @@ android {
         applicationId = "df.root"
         minSdk = 31
         targetSdk = 36
-        versionCode = 8
+        versionCode = 9
         versionName = appVersionName.get()
 
         ndk {
